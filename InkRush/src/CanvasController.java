@@ -11,7 +11,11 @@ import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+// ADDED: Imports for your timeout logic
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,36 +24,28 @@ import java.util.concurrent.Executors;
  * Handles user input, server communication, and GUI updates.
  *
  * NETWORK COMMUNICATION:
- * - Connects to server on initialization
+ * - Connects to server on initialization using dynamic IP from Lobby
  * - Sends messages via ObjectOutputStream
  * - Receives messages via background thread with ObjectInputStream
  * - All GUI updates use Platform.runLater() for thread safety
+ *
+ * ERROR HANDLING:
+ * - Implements graceful failure for connection timeouts (e.g., Server Full).
+ * - Handles UnknownHostException for invalid IP addresses.
  */
 public class CanvasController {
-    @FXML
-    private Button chatButton;
+    @FXML private Button chatButton;
+    @FXML private TextArea chatTextArea;
+    @FXML private TextField chatTextInput;
+    @FXML private Button clearButton;
+    @FXML private Canvas drawingCanvas;
 
-    @FXML
-    private TextArea chatTextArea;
+    @FXML private Label nameLabel; // Matches teammate's file
+    @FXML private Label wordLabel;
 
-    @FXML
-    private TextField chatTextInput;
-
-    @FXML
-    private Button clearButton;
-
-    @FXML
-    private Canvas drawingCanvas;
-
-    @FXML
-    private Label nameLabel;
-    // --- INTEGRATION CHANGE END ---
-
-    @FXML
-    private Label wordLabel;
-
-    private static final String SERVER_HOST = "localhost"; // fix how to connect to the server, right now it's by writing out server's IP address
+    // --- MERGE UPDATE: Use your dynamic IP logic instead of static localhost ---
     private static final int SERVER_PORT = 23596;
+    private String serverIP = "localhost"; // Default, overwritten by Lobby
 
     private Socket connection;
     private ObjectOutputStream output;
@@ -58,43 +54,50 @@ public class CanvasController {
     private String username = "Guest";
     private volatile boolean connected = false;
 
-    //Track last point for both local and remote drawing
+    // Drawing tracking variables (Teammate's logic)
     private double lastX;
     private double lastY;
     private double remoteLastX;
     private double remoteLastY;
     private boolean remoteFirstPoint = true;
 
-    // TODO Make logic to change between drawing styles (hardcoded for now)
+    // Hardcoded brush styles for now
     private static final double BRUSH_SIZE = 4.0;
-    private static final String BRUSH_COLOR = "#000000"; // Black
+    private static final String BRUSH_COLOR = "#000000";
 
     /**
-     * Sets the player name from the Lobby.
-     * This restores the connection between Lobby and Game.
+     * --- MERGE UPDATE: YOUR METHOD ---
+     * Sets the connection information (Name and IP) from the Lobby.
+     * Automatically triggers the connection attempt.
+     * @param name The player's username
+     * @param ip The IP address to connect to
      */
-    public void setPlayerName(String name) {
+    public void setConnectionInfo(String name, String ip) {
         this.username = name;
+        this.serverIP = ip;
+
         if (nameLabel != null) {
             nameLabel.setText(name);
         }
-        displayMessage("Welcome, " + username + "!\n");
-    }
 
+        // Start the connection attempt now that we have the IP
+        connectToServer();
+    }
 
     /**
      * Initializes the controller after FXML is loaded.
-     * Sets up event handlers and connects to server.
+     * Sets up event handlers for drawing.
      */
     @FXML
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
         setupDrawing();
-        connectToServer();
+        // --- MERGE UPDATE: REMOVED connectToServer() from here ---
+        // We wait for setConnectionInfo() to be called by the Lobby
     }
 
     /**
-     * Sets up drawing for local drawing and broadcasts drawing data to server
+     * Sets up drawing for local drawing and broadcasts drawing data to server.
      */
     private void setupDrawing() {
         var gc = drawingCanvas.getGraphicsContext2D();
@@ -131,7 +134,6 @@ public class CanvasController {
         });
     }
 
-
     @FXML
     private void clearCanvas(){
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
@@ -147,38 +149,79 @@ public class CanvasController {
     }
 
     /**
+     * --- MERGE UPDATE: YOUR ROBUST CONNECTION METHOD ---
      * Connects to the server and starts listening for messages.
      * Runs connection in background thread to avoid blocking GUI.
+     * Uses a timeout to detect if the server is full or unreachable.
      */
     private void connectToServer() {
         Runnable connectionTask = new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Connect to server
-                    connection = new Socket(SERVER_HOST, SERVER_PORT);
-                    displayMessage("Connected to server at " + SERVER_HOST + ":" + SERVER_PORT + "\n");
+                    displayMessage("Attempting connection to " + serverIP + "...\n");
 
-                    // Set up streams
+                    // Create an unconnected socket
+                    connection = new Socket();
+
+                    // 1. CONNECTION TIMEOUT (3s): Fails if Server is down/unreachable
+                    connection.connect(new InetSocketAddress(serverIP, SERVER_PORT), 3000);
+
+                    // 2. READ TIMEOUT (2s): Fixes the "Hanging" issue if server is full
+                    connection.setSoTimeout(2000);
+
                     output = new ObjectOutputStream(connection.getOutputStream());
                     output.flush();
 
+                    // This throws SocketTimeoutException if server accepts but ignores us (Full)
                     input = new ObjectInputStream(connection.getInputStream());
 
+                    // 3. RESET TIMEOUT: Once connected, we wait forever for messages
+                    connection.setSoTimeout(0);
+
                     connected = true;
-                    displayMessage("Ready to play!\n");
+                    displayMessage("SUCCESS: Connected to " + serverIP + "\n");
+                    displayMessage("Welcome, " + username + "!\n");
 
                     // Start listening for messages from server
                     processServerMessages();
 
-                } catch (IOException ioException) {
-                    displayMessage("Error connecting to server: " + ioException.getMessage() + "\n");
-                    ioException.printStackTrace();
+                } catch (UnknownHostException e) {
+                    closeSocketOnError();
+                    displayMessage("\n[ERROR] Invalid Host: " + serverIP + "\n");
+                    displayMessage("Please check the IP address format.\n");
+
+                } catch (SocketTimeoutException e) {
+                    // CATCH TIMEOUT EXPLICITLY
+                    closeSocketOnError();
+                    displayMessage("\n[ERROR] Connection Timed Out!\n");
+                    displayMessage("The server did not respond.\n");
+                    displayMessage("Likely cause: SERVER FULL or High Latency.\n");
+
+                } catch (IOException e) {
+                    // Catch other IO errors (like Connection Refused)
+                    closeSocketOnError();
+                    displayMessage("\n[ERROR] Connection failed!\n");
+                    displayMessage("Server response: " + e.getMessage() + "\n");
                 }
             }
         };
 
         executor.execute(connectionTask);
+    }
+
+    /**
+     * Helper to force-close the socket if connection fails.
+     * This ensures we don't leave half-open resources hanging.
+     */
+    private void closeSocketOnError() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (IOException e) {
+            // Ignored because we are already handling an error
+        }
     }
 
     /**
@@ -289,6 +332,22 @@ public class CanvasController {
             remoteLastX = x;
             remoteLastY = y;
         });
+    }
+
+    /**
+     * Sends a chat message to the server.
+     */
+    @FXML
+    private void sendServerChat() {
+        String message = chatTextInput.getText().trim();
+        if (message.isEmpty()) return;
+        if (!connected) {
+            displayMessage("Not connected to server!\n");
+            return;
+        }
+        Message chatMessage = Message.createChatMessage(username, message);
+        sendToServer(chatMessage);
+        chatTextInput.clear();
     }
 
     /**
