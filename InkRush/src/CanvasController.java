@@ -41,8 +41,6 @@ public class CanvasController {
     @FXML
     private Canvas drawingCanvas;
 
-    // --- INTEGRATION CHANGE START ---
-    // Replaced playerNameField/nameButton with nameLabel
     @FXML
     private Label nameLabel;
     // --- INTEGRATION CHANGE END ---
@@ -291,32 +289,6 @@ public class CanvasController {
             remoteLastX = x;
             remoteLastY = y;
         });
-    }
-
-    /**
-     * Sends a chat message to the server.
-     * Called when chatButton is clicked or Enter is pressed in chatTextInput.
-     * Message is broadcast to all connected clients by the server.
-     */
-    @FXML
-    private void sendServerChat() {
-        String message = chatTextInput.getText().trim();
-
-        if (message.isEmpty()) {
-            return;
-        }
-
-        if (!connected) {
-            displayMessage("Not connected to server!\n");
-            return;
-        }
-
-        // Format: CHAT:username:message
-        Message chatMessage = Message.createChatMessage(username, message);
-        sendToServer(chatMessage);
-
-        // Clear input field
-        chatTextInput.clear();
     }
 
     /**
