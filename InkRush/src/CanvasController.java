@@ -147,7 +147,7 @@ public class CanvasController {
         while (connected) {
             try {
                 // Blocks here waiting for server message
-                String message = (String) input.readObject();
+                Message message = (Message) input.readObject();
 
                 // Handle different message types
                 handleServerMessage(message);
@@ -170,38 +170,34 @@ public class CanvasController {
      *
      * @param message the message from the server
      */
-    private void handleServerMessage(String message) {
-        if (message.startsWith("CONNECTED:")) {
+    private void handleServerMessage(Message message) {
+        String messageType = message.getMessageType();
+
+        if (messageType.equals(Message.CONNECTED)) {
             // Server confirms connection with client ID
-            String[] parts = message.split(":");
-            if (parts.length >= 2) {
-                String clientID = parts[1];
-                displayMessage("You are Client " + clientID + "\n");
-            }
+            int clientID = message.parseConnectedMessage();
+            displayMessage("You are Client " + clientID + "\n");
 
         } else if (message.startsWith("CHAT:")) {
             // Chat message format: CHAT:username:message
-            String[] parts = message.split(":", 3);
-            if (parts.length >= 3) {
-                String user = parts[1];
-                String chatMessage = parts[2];
-                displayMessage(user + ": " + chatMessage + "\n");
-            } else {
-                displayMessage(message + "\n");
-            }
+            Message.ChatData chatData = message.parseChatMessage();
+            String user = chatData.getUsername();
+            String chatMessage = chatData.getMessage();
+            displayMessage(user + ": " + chatMessage + "\n");
 
-        } else if (message.startsWith("DRAW:")) {
+        } else if (messageType.equals(Message.DRAW)) {
             // TODO: Handle drawing messages
             // Format: DRAW:x,y,color,size
+            Message.DrawData drawData = message.parseDrawMessage();
             displayMessage("[Drawing received]\n");
 
-        } else if (message.equals("CLEAR")) {
+        } else if (messageType.equals(Message.CLEAR)) {
             // TODO: Clear canvas
             displayMessage("[Canvas cleared]\n");
 
         } else {
             // Unknown message type - just display it
-            displayMessage("[SERVER] " + message + "\n");
+            displayMessage("[SERVER] " + message.toString() + "\n");
         }
     }
 
@@ -247,8 +243,8 @@ public class CanvasController {
         }
 
         // Format: CHAT:username:message
-        String formattedMessage = "CHAT:" + username + ":" + message;
-        sendToServer(formattedMessage);
+        Message chatMessage = Message.createChatMessage(username, message);
+        sendToServer(chatMessage);
 
         // Clear input field
         chatTextInput.clear();
@@ -260,7 +256,7 @@ public class CanvasController {
      *
      * @param message the message to send
      */
-    private void sendToServer(String message) {
+    private void sendToServer(Message message) {
         if (!connected || output == null) {
             displayMessage("Cannot send - not connected to server\n");
             return;
@@ -297,7 +293,7 @@ public class CanvasController {
 
         try {
             if (output != null) {
-                sendToServer("TERMINATE");
+                sendToServer(Message.createTerminateMessage);
                 output.close();
             }
             if (input != null) {
