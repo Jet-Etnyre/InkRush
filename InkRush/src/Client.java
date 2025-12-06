@@ -167,6 +167,8 @@ public class Client extends Application {
     }
 
     // Manipulates displayArea on the JavaFX Application Thread
+    // Mentioned in 23.11 in the textbook, Platform must be used for MT in JavaFX since scene graph in JavaFX is not thread safe.
+    // This technique is called thread confinement.
     private void displayMessage(final String messageToDisplay) {
         Platform.runLater(() -> displayArea.appendText(messageToDisplay));
     }
