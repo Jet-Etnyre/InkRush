@@ -9,7 +9,13 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+// Import for socket communication, object streams, and managing asynchronous tasks with an executor
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class LobbyController {
 
@@ -22,7 +28,63 @@ public class LobbyController {
     // Used for clientID tracking and host-only check
     private int clientID = -1;
 
+    // Fields for managing a socket connection with the input/output streams,
+    // connection status, and a single-threaded executor for asynchronous tasks
+    private Socket connection;
+    private ObjectOutputStream output;
+    private ObjectInputStream input;
+    private boolean connected = false;
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+
     @FXML
+    private void initialize() {
+        // Allows the join button to be initially disabled
+        joinButton.setDisable(true);
+        connectToServer();
+    }
+    /**
+     * Connects to the server as soon as the lobby loads.
+     */
+    // Creates and runs a background task that connects to the server, initializes object streams,
+    // sets the connection status, and will start listening for server messages
+    private void connectToServer()
+    {
+        Runnable connectionTask = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    // Adjusts the host or port as needed
+                    connection = new Socket("localhost", 23596);
+                    output = new ObjectOutputStream(connection.getOutputStream());
+                    output.flush();
+                    input = new ObjectInputStream(connection.getInputStream());
+
+                    connected = true;
+
+                    listenForServerMessages();
+
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> System.out.println("Error connecting to server: " + e.getMessage()));
+                }
+            }
+        };
+        executor.execute(connectionTask);
+    }
+
+    /**
+     * Continuously listens for messages from the server.
+     */
+    private void listenForServerMessages() {
+        // Will add implimentation
+    }
+
+
+        @FXML
     public void onJoinClicked() {
         // Only host can start game
         if (clientID != 1) {
