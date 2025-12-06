@@ -1,22 +1,21 @@
-import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-// Import for socket communication, object streams, and managing asynchronous tasks with an executor
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+/**
+ * Controller for the Lobby screen.
+ * Handles user input for Username and Server IP address.
+ * Validates input and transitions to the Game (Canvas) screen.
+ */
 public class LobbyController {
 
     @FXML
@@ -25,140 +24,59 @@ public class LobbyController {
     @FXML
     private TextField playerNameField;
 
-    // Used for clientID tracking and host-only check
-    private int clientID = -1;
-
-    // Fields for managing a socket connection with the input/output streams,
-    // connection status, and a single-threaded executor for asynchronous tasks
-    private Socket connection;
-    private ObjectOutputStream output;
-    private ObjectInputStream input;
-    private boolean connected = false;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    @FXML
+    private TextField ipAddressField;
 
     @FXML
-    private void initialize() {
-        // Allows the join button to be initially disabled
-        joinButton.setDisable(true);
-        connectToServer();
-    }
+    private ListView<String> playersListView;
+
     /**
-     * Connects to the server as soon as the lobby loads.
+     * Initializes the controller class.
+     * Sets default values and prepares the UI.
      */
-    // Creates and runs a background task that connects to the server, initializes object streams,
-    // sets the connection status, and will start listening for server messages
-    private void connectToServer()
-    {
-        Runnable connectionTask = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    // Adjusts the host or port as needed
-                    connection = new Socket("localhost", 23596);
-                    output = new ObjectOutputStream(connection.getOutputStream());
-                    output.flush();
-                    input = new ObjectInputStream(connection.getInputStream());
+    @FXML
+    public void initialize() {
+        // Set a default IP for easier testing, or leave empty
+        if (ipAddressField.getText().isEmpty()) {
+            ipAddressField.setText("localhost");
+        }
 
-                    connected = true;
-
-                    listenForServerMessages();
-
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                    Platform.runLater(() -> System.out.println("Error connecting to server: " + e.getMessage()));
-                }
-            }
-        };
-        executor.execute(connectionTask);
+        // Ensure button is enabled so users can attempt to join
+        joinButton.setDisable(false);
     }
 
     /**
-     * Continuously listens for messages from the server.
+     * Handles the "Join Game" button click.
+     * Validates input, loads the game screen, passes connection info, and switches scenes.
      */
-    private void listenForServerMessages()
-    {
-        Runnable listenTask = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    while (connected)
-                    {
-                        Message message = (Message)input.readObject();
-                        handleServerMessage(message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                    connected = false;
-                }
-
-            }
-        };
-        executor.execute(listenTask);
-    }
-
-    public void handleServerMessage(Message message)
-    {
-        String type = message.getMessageType();
-
-        if (type.equals(Message.CONNECTED))
-        {
-            clientID = message.parseConnectedMessage();
-            Platform.runLater(() -> displayClientIDInfo());
-        }
-    }
-
-    private void displayClientIDInfo()
-    {
-        if (clientID == 1)
-        {
-            // This allows the host to only start game
-            joinButton.setDisable(false);
-        }
-        else
-        {
-            // Other people who join cannot start the game button disabled
-            joinButton.setDisable(true);
-        }
-        // Allows all players to type their name
-        playerNameField.setEditable(true);
-    }
-
     @FXML
-    public void onJoinClicked()
-    {
-        // Only host can start game
-        if (clientID != 1) {
-            System.out.println("Only the host can start the game.");
-            return;
-        }
-
+    public void onJoinClicked() {
         try {
             String username = playerNameField.getText().trim();
+            String serverIP = ipAddressField.getText().trim();
 
+            // 1. Basic Validation
             if (username.isEmpty()) {
                 System.out.println("Please enter a name!");
                 return;
             }
+            if (serverIP.isEmpty()) {
+                System.out.println("Please enter an IP address!");
+                return;
+            }
 
+            // 2. Load the Game (Canvas) FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Canvas.fxml"));
             Parent gameRoot = loader.load();
 
-            // Get the controller and set the data
-            final CanvasController gameController = loader.getController();
-            gameController.setPlayerName(username);
+            // 3. Get the controller and pass the Connection Info
+            CanvasController gameController = loader.getController();
+            gameController.setConnectionInfo(username, serverIP);
 
+            // 4. Switch the Scene
             Stage stage = (Stage) joinButton.getScene().getWindow();
 
-            // ANONYMOUS CLASS (No Lambda)
+            // Ensure the game disconnects from server when the window is closed
             stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
                 @Override
                 public void handle(WindowEvent event) {
@@ -169,9 +87,9 @@ public class LobbyController {
             stage.setScene(new Scene(gameRoot));
             stage.setTitle("InkRush - Game: " + username);
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("Error loading game screen: " + e.getMessage());
         }
     }
 }
