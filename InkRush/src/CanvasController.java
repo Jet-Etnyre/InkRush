@@ -60,6 +60,9 @@ public class CanvasController {
     private ExecutorService executor;
     private String username = "Guest";
     private volatile boolean connected = false;
+    private double lastX;
+    private double lastY;
+
 
     /**
      * Initializes the controller after FXML is loaded.
@@ -68,8 +71,31 @@ public class CanvasController {
     @FXML
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
-
+        setupLocalDrawing();
         connectToServer();
+    }
+
+    private void setupLocalDrawing() {
+        var gc = drawingCanvas.getGraphicsContext2D();
+
+        // When mouse is pressed
+        drawingCanvas.setOnMousePressed(event -> {
+            lastX = event.getX();
+            lastY = event.getY();
+        });
+
+        // When mouse is dragged so moving while clicking
+        drawingCanvas.setOnMouseDragged(event -> {
+            double x = event.getX();
+            double y = event.getY();
+            // brush size
+            gc.setLineWidth(4);
+            gc.strokeLine(lastX, lastY, x, y);
+
+            lastX = x;
+            lastY = y;
+        });
+        drawingCanvas.setOnMouseReleased(event -> {});
     }
 
     /**
