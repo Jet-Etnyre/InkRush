@@ -128,5 +128,103 @@ public class GameLogic {
         return currentWord.equalsIgnoreCase(guess.trim());
     }
 
+    /**
+     * Awards points to a player for a correct guess based on guess order.
+     * First correct guess gets the most points, decreasing for later guessers.
+     * Also awards bonus points to the drawer.
+     * @param guesserID to the ID of player who guessed correctly
+     * @return the points awarded to the guesser
+     */
+    public int awardPoints(int guesserID) {
+        // check if this player already guessed correctly
+        if (correctGuessers.contains(guesserID)) {
+            return 0;
+        }
+        // check if guesser is the drawer (can't guess your own word!)
+        if (guesserID == currentDrawerID) {
+            return 0; // drawer can't score by guessing
+        }
+
+        PlayerInfo guesser = players.get(guesserID);
+        PlayerInfo drawer = players.get(currentDrawerID);
+
+        if (guesser == null) {
+            return 0;
+        }
+
+        // calculate points based on guess order
+        int pointsAwarded = 0;
+        if (guessCount < GUESS_POINTS.length) {
+            pointsAwarded = GUESS_POINTS[guessCount];
+        } else {
+            // if more than 4 guessers, give minimum points
+            pointsAwarded = GUESS_POINTS[GUESS_POINTS.length - 1];
+        }
+
+        // award points to guesser
+        guesser.addScore(pointsAwarded);
+
+        // award bonus to drawer (gets points for each correct guess)
+        if (drawer != null) {
+            drawer.addScore(POINTS_DRAWER_BONUS);
+        }
+
+        // track this guesser
+        correctGuessers.add(guesserID);
+        guessCount++;
+
+        return pointsAwarded;
+    }
+
+    /**
+     * Checks if a player has already guessed correctly this round.
+     * @param clientID the client ID to check
+     * @return true if already guessed correctly, false otherwise
+     */
+    public boolean hasGuessedCorrectly(int clientID) {
+        return correctGuessers.contains(clientID);
+    }
+
+    /**
+     * Gets the current guess count (how many have guessed correctly)
+     * @return number of correct guessers so far
+     */
+    public int getGuessCount() {
+        return guessCount;
+    }
+
+    /**
+     * Ends the current round.
+     * Advances to the next drawer in rotation.
+     * Clears round state and guess tracking.
+     */
+    public void endRound() {
+        roundActive = false;
+        currentWord = null;
+        correctGuessers.clear();
+        guessCount = 0;
+
+        // move to next drawer (cycles through: 0 -> 1 -> 2 -> ... -> N-1 -> 0)
+        currentDrawerIndex = (currentDrawerIndex + 1) % playerOrder.size();
+    }
+
+    /**
+     * Gets the ID of who will draw in the next round.
+     * Useful for previewing next drawer without ending current round.
+     * @return the next drawer's client ID
+     */
+    public int getNextDrawerID() {
+        if (playerOrder.isEmpty()) {
+            return -1;
+        }
+        int nextIndex = (currentDrawerIndex + 1) % playerOrder.size();
+        return playerOrder.get(nextIndex);
+    }
+
+
+
+
+
+
 
 }
