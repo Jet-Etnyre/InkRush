@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,8 +19,17 @@ public class LobbyController {
     @FXML
     private TextField playerNameField;
 
+    // Used for clientID tracking and host-only check
+    private int clientID = -1;
+
     @FXML
     public void onJoinClicked() {
+        // Only host can start game
+        if (clientID != 1) {
+            System.out.println("Only the host can start the game.");
+            return;
+        }
+
         try {
             String username = playerNameField.getText().trim();
 
@@ -48,7 +58,8 @@ public class LobbyController {
             stage.setScene(new Scene(gameRoot));
             stage.setTitle("InkRush - Game: " + username);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
