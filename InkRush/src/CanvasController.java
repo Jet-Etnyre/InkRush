@@ -16,16 +16,25 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import java.net.InetSocketAddress; // Required for the timeout logic
+
 /**
- * Controller for the InkRush game client (Game Screen).
- * Handles user input, server communication (TCP), and GUI updates.
- *
- * NETWORK COMMUNICATION:
- * - Connects to server using IP passed from Lobby
- * - Sends messages via ObjectOutputStream
- * - Receives messages via background thread with ObjectInputStream
- * - All GUI updates use Platform.runLater() for thread safety
+ * Controller for the main Game Screen (Canvas) of the InkRush application.
+ * * RESPONSIBILITIES:
+ * 1. Network Management: Establishes and manages a TCP socket connection to the game server.
+ * 2. User Interface: Handles all GUI updates for chat, drawing, and game status.
+ * 3. Game State: Synchronizes local drawing actions with remote players via the server.
+ * * ARCHITECTURE:
+ * - This controller is initialized *after* the Lobby. It receives connection details (IP/Name)
+ * via the setConnectionInfo(String, String) method.
+ * - Network operations run on a background thread (ExecutorService) to prevent freezing the JavaFX UI.
+ * - Incoming messages are deserialized from the ObjectInputStream and routed to specific handlers.
+ * - All UI updates are wrapped in Platform.runLater() to ensure thread safety.
+ * * ERROR HANDLING:
+ * - Implements graceful failure for connection timeouts (e.g., Server Full).
+ * - Handles UnknownHostException for invalid IP addresses.
  */
+
 public class CanvasController {
     @FXML private Button chatButton;
     @FXML private TextArea chatTextArea;
@@ -129,7 +138,7 @@ public class CanvasController {
     /**
      * Connects to the server and starts listening for messages.
      * Runs connection in background thread to avoid blocking GUI.
-     * Handles UnknownHostException and IOException gracefully.
+     * Uses a timeout to detect if the server is full or unreachable.
      */
     private void connectToServer() {
         Runnable connectionTask = new Runnable() {
@@ -138,8 +147,12 @@ public class CanvasController {
                 try {
                     displayMessage("Attempting connection to " + serverIP + "...\n");
 
-                    // Connect to server
-                    connection = new Socket(serverIP, SERVER_PORT);
+                    // Create an unconnected socket
+                    connection = new Socket();
+
+                    // Try to connect with a 3000ms (3 second) timeout
+                    // This prevents the app from hanging forever if the server is down or full
+                    connection.connect(new InetSocketAddress(serverIP, SERVER_PORT), 3000);
 
                     output = new ObjectOutputStream(connection.getOutputStream());
                     output.flush();
@@ -153,12 +166,11 @@ public class CanvasController {
                     processServerMessages();
 
                 } catch (UnknownHostException e) {
-                    // Graceful Error: Bad IP format
-                    displayMessage("\n[ERROR] Could not find server: " + serverIP + "\n");
-                    displayMessage("Please restart and check the IP address format.\n");
+                    displayMessage("\n[ERROR] Invalid Host: " + serverIP + "\n");
+                    displayMessage("Please check the IP address format.\n");
 
                 } catch (IOException e) {
-                    // Graceful Error: Server full, down, or blocked
+                    // This catches the SocketTimeoutException
                     displayMessage("\n[ERROR] Connection failed!\n");
                     displayMessage("Server response: " + e.getMessage() + "\n");
 
