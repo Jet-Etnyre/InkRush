@@ -17,13 +17,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class Client extends Application {
-    private TextField enterField;    // enters information from user
-    private TextArea displayArea;    // display information to user
-    private ObjectOutputStream output; // output stream to server
-    private ObjectInputStream input;   // input stream from server
-    private String message = "";       // message from server
-    private String chatServer;         // host server for this application
-    private Socket client;             // socket to communicate with server
+    private TextField enterField;    // Enters information from user
+    private TextArea displayArea;    // Display information to user
+    private ObjectOutputStream output; // Output stream to server
+    private ObjectInputStream input;   // Input stream from server
+    private String message = "";       // Message from server
+    private String chatServer;         // Host server for this application
+    private Socket client;             // Socket to communicate with server
 
     @Override
     public void start(Stage primaryStage) {
@@ -75,49 +75,49 @@ public class Client extends Application {
         clientThread.start();
     }
 
-    // connect to server and process messages from server
+    // Connect to server and process messages from server
     public void runClient() {
         try {
-            connectToServer();   // create a Socket to make connection
-            getStreams();        // get the input and output streams
-            processConnection(); // process connection
+            connectToServer();   // Create a Socket to make connection
+            getStreams();        // Get the input and output streams
+            processConnection(); // Process connection
         } catch (EOFException eofException) {
             displayMessage("\nClient terminated connection");
         } catch (IOException ioException) {
             ioException.printStackTrace();
             displayMessage("\nI/O error: " + ioException.getMessage());
         } finally {
-            closeConnection();   // close connection
+            closeConnection();   // Close connection
         }
     }
 
-    // connect to server
+    // Connect to server
     private void connectToServer() throws IOException {
         displayMessage("Attempting connection\n");
 
-        // create Socket to make connection to server
+        // Create Socket to make connection to server
         client = new Socket(InetAddress.getByName(chatServer), 23555);
 
-        // display connection information
+        // Display connection information
         displayMessage("Connected to: " +
                 client.getInetAddress().getHostName());
     }
 
-    // get streams to send and receive data
+    // Get streams to send and receive data
     private void getStreams() throws IOException {
-        // set up output stream for objects
+        // Set up output stream for objects
         output = new ObjectOutputStream(client.getOutputStream());
-        output.flush(); // flush output buffer to send header information
+        output.flush(); // Flush output buffer to send header information
 
-        // set up input stream for objects
+        // Set up input stream for objects
         input = new ObjectInputStream(client.getInputStream());
 
         displayMessage("\nGot I/O streams\n");
     }
 
-    // process connection with server
+    // Process connection with server
     private void processConnection() throws IOException {
-        // enable enterField so client user can send messages
+        // Enable enterField so client user can send messages
         setTextFieldEditable(true);
 
         do {
@@ -130,7 +130,7 @@ public class Client extends Application {
         } while (!"SERVER>>> TERMINATE".equals(message));
     }
 
-    // close streams and socket
+    // Close streams and socket
     private void closeConnection() {
         displayMessage("\nClosing connection");
         setTextFieldEditable(false); // disable enterField
@@ -150,7 +150,7 @@ public class Client extends Application {
         }
     }
 
-    // send message to server
+    // Send message to server
     private void sendData(String message) {
         if (output == null) {
             displayMessage("\nCannot send message: not connected to server");
@@ -166,12 +166,12 @@ public class Client extends Application {
         }
     }
 
-    // manipulates displayArea on the JavaFX Application Thread
+    // Manipulates displayArea on the JavaFX Application Thread
     private void displayMessage(final String messageToDisplay) {
         Platform.runLater(() -> displayArea.appendText(messageToDisplay));
     }
 
-    // manipulates enterField on the JavaFX Application Thread
+    // Manipulates enterField on the JavaFX Application Thread
     private void setTextFieldEditable(final boolean editable) {
         Platform.runLater(() -> enterField.setEditable(editable));
     }
