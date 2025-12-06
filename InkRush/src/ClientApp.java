@@ -6,56 +6,43 @@ import javafx.stage.Stage;
 
 /**
  * Main application class for the InkRush game client.
- * Launches the JavaFX client GUI and connects to the game server.
+ * Launches the Lobby Screen.
  */
 public class ClientApp extends Application {
 
-    private CanvasController controller;
-
     /**
      * Main entry point for the application
-     * @param args command line arguments (not used)
+     * @param args command line arguments
      */
     public static void main(String[] args) {
         launch(args);
     }
 
     /**
-     * Starts the JavaFX application and displays the client window.
-     *
-     * @param stage the primary stage for this application
-     * @throws Exception if FXML file cannot be loaded
+     * Starts the JavaFX application and displays the Lobby window.
      */
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("Canvas.fxml"));
+        // Load the Lobby FXML
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("Lobby.fxml"));
         Parent root = loader.load();
 
-        // Get controller reference for cleanup on close
-        controller = loader.getController();
+        // We don't need to get the controller here anymore because
+        // ClientApp doesn't need to manage the Lobby's internal logic.
 
         Scene scene = new Scene(root);
-        stage.setTitle("InkRush - Draw & Guess");
+        stage.setTitle("InkRush - Lobby");
         stage.setScene(scene);
-
-        // Handle window close event
-        stage.setOnCloseRequest(event -> {
-            if (controller != null) {
-                controller.disconnect();
-            }
-        });
-
         stage.show();
     }
 
     /**
      * Handles application shutdown.
-     * Ensures clean disconnect from server.
      */
     @Override
     public void stop() {
-        if (controller != null) {
-            controller.disconnect();
-        }
+        // System.exit(0) ensures all background threads (like the server listener)
+        // are killed when the window closes.
+        System.exit(0);
     }
 }

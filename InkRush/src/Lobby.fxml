@@ -32,7 +32,7 @@
       </rowConstraints>
     </GridPane>
 
-    <Button fx:id="joinButton" prefWidth="130" text="Join Lobby" />
+    <Button fx:id="joinButton" onAction="#onJoinClicked" prefWidth="130" text="Join Game" />
 
     <Label text="Players:">
         <font>
