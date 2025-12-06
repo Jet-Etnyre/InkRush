@@ -20,10 +20,10 @@
             <font>
                <Font name="System Bold" size="18.0" />
             </font></Label>
-            <TextField fx:id="playerNameField" promptText="Enter Name Here" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-         <Button fx:id="nameButton" mnemonicParsing="false" onAction="#setUsername" text="Enter" GridPane.columnIndex="2" />
+         <Label fx:id="nameLabel" text="Label" GridPane.columnIndex="3" />
         </children>
       <columnConstraints>
+         <ColumnConstraints />
          <ColumnConstraints />
          <ColumnConstraints />
          <ColumnConstraints />
