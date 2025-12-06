@@ -1,8 +1,6 @@
-import javax.swing.*;
-
-public class ServerDriver {
+public class ServerApp {
     public static void main(String[] args) {
-        Server application = new Server(); // create server
+        ServerController application = new ServerController(); // create server
         application.runServer(); // run server application
     }
 }
