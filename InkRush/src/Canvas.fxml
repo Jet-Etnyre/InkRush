@@ -44,7 +44,7 @@
         <children>
          <Button fx:id="chatButton" mnemonicParsing="false" onAction="#sendServerChat" text="Chat" />
          <TextField fx:id="chatTextInput" promptText="Enter Chats Here" />
-            <Button fx:id="clearButton" alignment="TOP_LEFT" text="Clear">
+            <Button fx:id="clearButton" alignment="TOP_LEFT" onAction="#clearCanvas" text="Clear">
             <font>
                <Font name="System Bold" size="12.0" />
             </font></Button>

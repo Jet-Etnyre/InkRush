@@ -1,10 +1,12 @@
 import javafx.fxml.FXML;
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
+import javafx.scene.paint.Color;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -63,6 +65,9 @@ public class CanvasController {
     private double lastX;
     private double lastY;
 
+    // TODO Make logic to change between drawing styles (hardcoded for now)
+    private static final double BRUSH_SIZE = 4.0;
+    private static final String BRUSH_COLOR = "#000000"; // Black
 
     /**
      * Initializes the controller after FXML is loaded.
@@ -71,12 +76,19 @@ public class CanvasController {
     @FXML
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
-        setupLocalDrawing();
+        setupDrawing();
+        setupClearButton();
         connectToServer();
     }
 
-    private void setupLocalDrawing() {
+
+    /**
+     * Sets up drawing for local drawing and broadcasts drawing data to server
+     */
+    private void setupDrawing() {
         var gc = drawingCanvas.getGraphicsContext2D();
+        gc.setLineWidth(BRUSH_SIZE);
+        gc.setStroke(Color.BLACK);
 
         // When mouse is pressed
         drawingCanvas.setOnMousePressed(event -> {
@@ -88,14 +100,48 @@ public class CanvasController {
         drawingCanvas.setOnMouseDragged(event -> {
             double x = event.getX();
             double y = event.getY();
-            // brush size
-            gc.setLineWidth(4);
+
             gc.strokeLine(lastX, lastY, x, y);
+
+            if(connected) {
+                Message drawMessage = Message.createDrawMessage(lastX, lastY, BRUSH_COLOR, BRUSH_SIZE);
+                sendToServer(drawMessage);
+            }
 
             lastX = x;
             lastY = y;
         });
         drawingCanvas.setOnMouseReleased(event -> {});
+    }
+
+    /**
+     * Sets up the clear button to clear canvas and notify server.
+     */
+    private void setupClearButton(){
+        clearCanvas();
+        if(connected) {
+            Message clearMessage = Message.createClearMessage();
+            sendToServer(clearMessage);
+        }
+    }
+
+    /**
+     * Clears the local canvas.
+     */
+    private void clearCanvass(){
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+    }
+
+    @FXML
+    private void clearCanvas(){
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+
+        if(connected) {
+            Message clearMessage = Message.createClearMessage();
+            sendToServer(clearMessage);
+        }
     }
 
     /**
@@ -189,16 +235,40 @@ public class CanvasController {
             // TODO: Handle drawing messages
             // Format: DRAW:x,y,color,size
             Message.DrawData drawData = message.parseDrawMessage();
-            displayMessage("[Drawing received]\n");
+            drawRemotePoint(drawData);
 
         } else if (messageType.equals(Message.CLEAR)) {
-            // TODO: Clear canvas
+            Platform.runLater(this::clearCanvas);
             displayMessage("[Canvas cleared]\n");
 
         } else {
             // Unknown message type - just display it
             displayMessage("[SERVER] " + message.toString() + "\n");
         }
+    }
+
+    /**
+     * Draws a point received from another client
+     * Thread safe, uses platform.runlater() for gui updates
+     * @param drawData DrawData Message containing coordinates color, size
+     */
+    private void drawRemotePoint(Message.DrawData drawData) {
+        Platform.runLater(() -> {
+            GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+
+            // Parse color
+            Color color = Color.web(drawData.getColor());
+            gc.setStroke(color);
+            gc.setLineWidth(drawData.getSize());
+
+            //Draws small line from the point to itself (dot)
+            //TODO track previous points for smooth lines
+            double x = drawData.getX();
+            double y = drawData.getY();
+
+            gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
+                    drawData.getSize(), drawData.getSize());
+        });
     }
 
     /**
