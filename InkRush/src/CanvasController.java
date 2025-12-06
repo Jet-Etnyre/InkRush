@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import java.net.InetSocketAddress; // Required for the timeout logic
+import java.net.SocketTimeoutException;
 
 /**
  * Controller for the main Game Screen (Canvas) of the InkRush application.
@@ -151,7 +152,6 @@ public class CanvasController {
                     connection = new Socket();
 
                     // Try to connect with a 3000ms (3 second) timeout
-                    // This prevents the app from hanging forever if the server is down or full
                     connection.connect(new InetSocketAddress(serverIP, SERVER_PORT), 3000);
 
                     output = new ObjectOutputStream(connection.getOutputStream());
@@ -166,22 +166,42 @@ public class CanvasController {
                     processServerMessages();
 
                 } catch (UnknownHostException e) {
+                    closeSocketOnError();
                     displayMessage("\n[ERROR] Invalid Host: " + serverIP + "\n");
                     displayMessage("Please check the IP address format.\n");
 
+                } catch (SocketTimeoutException e) {
+                    // CATCH TIMEOUT EXPLICITLY
+                    closeSocketOnError();
+                    displayMessage("\n[ERROR] Connection Timed Out! (3s)\n");
+                    displayMessage("The server did not respond in time.\n");
+                    displayMessage("Possible causes:\n");
+                    displayMessage("1. The Server is FULL (waiting for a slot)\n");
+                    displayMessage("2. The Server is not running\n");
+
                 } catch (IOException e) {
-                    // This catches the SocketTimeoutException
+                    // Catch other IO errors (like Connection Refused)
+                    closeSocketOnError();
                     displayMessage("\n[ERROR] Connection failed!\n");
                     displayMessage("Server response: " + e.getMessage() + "\n");
-
-                    displayMessage("Possible causes:\n");
-                    displayMessage("1. The Server is FULL (Game already started)\n");
-                    displayMessage("2. The Server is not running on " + serverIP + "\n");
-                    displayMessage("3. A Firewall is blocking the connection\n");
                 }
             }
         };
         executor.execute(connectionTask);
+    }
+
+    /**
+     * Helper to force-close the socket if connection fails.
+     * This ensures we don't leave half-open resources hanging.
+     */
+    private void closeSocketOnError() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (IOException e) {
+            // Ignored because we are already handling an error
+        }
     }
 
     /**
