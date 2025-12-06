@@ -198,7 +198,6 @@ public class ServerController {
     /**
      * SockServer inner class implements Runnable for handling a single client connection.
      * Each client gets its own dedicated TextArea for displaying activity.
-     * <p>
      * Workflow:
      * 1. Client connects, waitForConnection completes
      * 2. ExecutorService while run() method runs in background thread
@@ -279,7 +278,6 @@ public class ServerController {
         /**
          * Main message processing loop.
          * Runs continuously, blocking at readObject() until messages arrive
-         * <p>
          * Message flow:
          * 1. Client draws and sends info message
          * 2. this method retrieves it and logs to display field
@@ -320,7 +318,6 @@ public class ServerController {
         /**
          * Handles different type of game messages.
          * Routes messages accordingly based on type.
-         * <p>
          * Message Protocol:
          * - CHAT:username:message -> broadcast to all clients
          * - DRAW:x,y,color,size -> Broadcast to all except drawer
@@ -365,7 +362,7 @@ public class ServerController {
                     int points = gameLogic.awardPoints(myConID);
 
                     Message toGuesser = Message.createChatMessage("SYSTEM",
-                            "✅ You guessed the word! +" + points + " points");
+                            "You guessed the word! +" + points + " points");
                     sockServer[myConID].sendData(toGuesser);
 
                     Message toOthers = Message.createChatMessage("SYSTEM",

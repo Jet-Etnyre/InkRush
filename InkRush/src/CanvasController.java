@@ -43,7 +43,7 @@ public class CanvasController {
     @FXML private Label nameLabel; // Matches teammate's file
     @FXML private Label wordLabel;
 
-    // --- MERGE UPDATE: Use your dynamic IP logic instead of static localhost ---
+    //Use dynamic IP logic
     private static final int SERVER_PORT = 23596;
     private String serverIP = "localhost"; // Default, overwritten by Lobby
 
@@ -66,7 +66,6 @@ public class CanvasController {
     private static final String BRUSH_COLOR = "#000000";
 
     /**
-     * --- MERGE UPDATE: YOUR METHOD ---
      * Sets the connection information (Name and IP) from the Lobby.
      * Automatically triggers the connection attempt.
      * @param name The player's username
@@ -92,8 +91,6 @@ public class CanvasController {
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
         setupDrawing();
-        // --- MERGE UPDATE: REMOVED connectToServer() from here ---
-        // We wait for setConnectionInfo() to be called by the Lobby
     }
 
     /**
@@ -149,7 +146,6 @@ public class CanvasController {
     }
 
     /**
-     * --- MERGE UPDATE: YOUR ROBUST CONNECTION METHOD ---
      * Connects to the server and starts listening for messages.
      * Runs connection in background thread to avoid blocking GUI.
      * Uses a timeout to detect if the server is full or unreachable.
@@ -228,11 +224,7 @@ public class CanvasController {
      * Continuously listens for messages from the server.
      * Runs in background thread - blocks at readObject() waiting for messages.
      *
-     * MESSAGE TYPES HANDLED:
-     * - CONNECTED:id -> Server confirms connection
-     * - CHAT:username:message -> Display chat message
-     * - DRAW:x,y,color,size -> Draw point on canvas
-     * - CLEAR -> Clear canvas
+     * All message types to be handled are in Message
      */
     private void processServerMessages() {
         while (connected) {
@@ -318,8 +310,7 @@ public class CanvasController {
             double distance = Math.sqrt(Math.pow(x - remoteLastX, 2) + Math.pow(y - remoteLastY, 2));
 
             //If distance is too large (pen lifted) or first point, draw a dot
-            //Threshold of 50 pixels
-
+            //Threshold of 9 pixels
             if(remoteFirstPoint || distance > 9) {
                 //First point - just draw a dot
                 gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
