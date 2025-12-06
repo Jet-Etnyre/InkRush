@@ -88,7 +88,6 @@ public class GameLogic {
         if (playerOrder.isEmpty()) {
             return -1;
         }
-
         // select next drawer (rotates through all players)
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
@@ -221,10 +220,177 @@ public class GameLogic {
         return playerOrder.get(nextIndex);
     }
 
+    /**
+     * Gets the time remaining in the current round.
+     * @return seconds remaining, of 0 if round not active
+     */
+    public int getTimeRemaining() {
+        if (!roundActive) {
+            return 0;
+        }
 
+        long currentTime = System.currentTimeMillis();
+        long elapsedMillis = currentTime - roundStartTime;
+        long elapsedSeconds = elapsedMillis / 1000;
 
+        int remaining = ROUND_DURATION_SECONDS - (int) elapsedSeconds;
+        return Math.max(0, remaining);
+    }
 
+    /**
+     * Checks if the round time has expired
+     * @return true if time is up, false otherwise
+     */
+    public boolean  isTimeUp() {
+        return roundActive && getTimeRemaining() <= 0;
+    }
 
+    /**
+     * Gets the current word being drawn
+     * @return the current word
+     */
+    public String getCurrentWord() {
+        return currentWord;
+    }
 
+    /**
+     * Gets a hint for the current word (underscores with length)
+     * @return hint string with word length
+     */
+    public String getWordHint() {
+        if (currentWord == null) {
+            return "";
+        }
 
+        StringBuilder hint = new StringBuilder();
+        for (int i = 0; i < currentWord.length(); i++) {
+            hint.append("_ ");
+        }
+        return hint.toString().trim();
+    }
+
+    /**
+     * Gets the current drawer's ID
+     * @return drawer's client ID
+     */
+    public int getCurrentDrawerID() {
+        return currentDrawerID;
+    }
+
+    /**
+     * Checks if a round is currently active.
+     * @return true if round is active, false otherwise
+     */
+    public boolean isRoundActive() {
+        return roundActive;
+    }
+
+    /**
+     * Gets a player's current score
+     * @param clientID the client ID
+     * @return the player's score, or 0 if not found
+     */
+    public int getPlayerScore(int clientID) {
+        PlayerInfo player = players.get(clientID);
+        return player != null ? player.getScore() : 0;
+    }
+
+    /**
+     * Gets a player's username.
+     * @param clientID the client ID
+     * @return the player's username, or null if not found
+     */
+    public String getPlayerUsername(int clientID) {
+        PlayerInfo player = players.get(clientID);
+        return player != null ? player.getUsername() : null;
+    }
+
+    /**
+     * Gets the leaderboard sorted by score (highest first)
+     * @return list of players sorted by score descending
+     */
+    public List<PlayerInfo> getLeaderboard() {
+        List<PlayerInfo> leaderboard = new ArrayList<>(players.values());
+
+        // Sort by score descending
+        leaderboard.sort((p1, p2) -> Integer.compare(p2.getScore(), p1.getScore()));
+
+        return leaderboard;
+    }
+
+    /**
+     * Gets the number of active players
+     * @return number of players
+     */
+    public int getPlayerCount() {
+        return players.size();
+    }
+
+    /**
+     * Resets all player scores to zero.
+     */
+    public void resetScores() {
+        for (PlayerInfo player : players.values()) {
+            player.resetScore();
+        }
+    }
+
+    /**
+     * Inner class representing a player's information.
+     */
+    public static class PlayerInfo {
+        private int clientID;
+        private String username;
+        private int score;
+
+        /**
+         * Creates a new player info object
+         * @param clientID the client's unique ID
+         * @param username the player's username
+         */
+        public PlayerInfo(int clientID, String username) {
+            this.clientID = clientID;
+            this.username = username;
+            this.score = 0;
+        }
+
+        /**
+         * Gets the client ID
+         * @return the client ID
+         */
+        public int getClientID() {
+            return clientID;
+        }
+
+        /**
+         * Gets the username
+         * @return the username
+         */
+        public String getUsername() {
+            return username;
+        }
+
+        /**
+         * Gets the current score
+         * @return the score
+         */
+        public int getScore() {
+            return score;
+        }
+
+        /**
+         * Adds points to the player's score
+         * @param points the points to add
+         */
+        public void addScore(int points) {
+            score += points;
+        }
+
+        /**
+         * Resets the score to zero.
+         */
+        public void resetScore() {
+            score = 0;
+        }
+    }
 }
