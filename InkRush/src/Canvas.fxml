@@ -9,12 +9,16 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<VBox spacing="10" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
+<VBox spacing="10" style="-fx-background-color: #7af09a;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
 
     <GridPane alignment="TOP_LEFT" hgap="8.0" vgap="5.0">
         <children>
-            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label text="Player Name:" underline="true" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <font>
+               <Font name="System Bold" size="18.0" />
+            </font></Label>
             <TextField fx:id="playerNameField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
         </children>
       <columnConstraints>
@@ -26,14 +30,23 @@
       </rowConstraints>
     </GridPane>
 
-    <Label fx:id="wordLabel" text="Word to Draw" />
+    <Label fx:id="wordLabel" text="Word to Draw">
+      <font>
+         <Font name="System Bold" size="18.0" />
+      </font></Label>
 
     <Canvas fx:id="drawingCanvas" height="300" width="500" />
 
     <HBox alignment="CENTER" spacing="10">
         <children>
-            <Button fx:id="clearButton" alignment="TOP_LEFT" text="Clear" />
-            <Button fx:id="sendGuessButton" alignment="CENTER" text="Send Guess" />
+            <Button fx:id="clearButton" alignment="TOP_LEFT" text="Clear">
+            <font>
+               <Font name="System Bold" size="12.0" />
+            </font></Button>
+            <Button fx:id="sendGuessButton" alignment="CENTER" text="Send Guess">
+            <font>
+               <Font name="System Bold" size="12.0" />
+            </font></Button>
         </children>
     </HBox>
 
