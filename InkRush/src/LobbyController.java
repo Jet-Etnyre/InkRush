@@ -91,6 +91,7 @@ public class LobbyController {
                     while (connected)
                     {
                         Message message = (Message)input.readObject();
+                        handleServerMessage(message);
                     }
                 }
                 catch (Exception e)
@@ -104,9 +105,36 @@ public class LobbyController {
         executor.execute(listenTask);
     }
 
+    public void handleServerMessage(Message message)
+    {
+        String type = message.getMessageType();
+
+        if (type.equals(Message.CONNECTED))
+        {
+            clientID = message.parseConnectedMessage();
+            Platform.runLater(() -> displayClientIDInfo());
+        }
+    }
+
+    private void displayClientIDInfo()
+    {
+        if (clientID == 1)
+        {
+            // This allows the host to only start game
+            joinButton.setDisable(false);
+        }
+        else
+        {
+            // Other people who join cannot start the game button disabled
+            joinButton.setDisable(true);
+        }
+        // Allows all players to type their name
+        playerNameField.setEditable(true);
+    }
 
     @FXML
-    public void onJoinClicked() {
+    public void onJoinClicked()
+    {
         // Only host can start game
         if (clientID != 1) {
             System.out.println("Only the host can start the game.");
