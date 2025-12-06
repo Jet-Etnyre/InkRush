@@ -79,12 +79,33 @@ public class LobbyController {
     /**
      * Continuously listens for messages from the server.
      */
-    private void listenForServerMessages() {
-        // Will add implimentation
+    private void listenForServerMessages()
+    {
+        Runnable listenTask = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    while (connected)
+                    {
+                        Message message = (Message)input.readObject();
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                    connected = false;
+                }
+
+            }
+        };
+        executor.execute(listenTask);
     }
 
 
-        @FXML
+    @FXML
     public void onJoinClicked() {
         // Only host can start game
         if (clientID != 1) {
