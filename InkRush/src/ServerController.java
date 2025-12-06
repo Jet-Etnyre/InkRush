@@ -10,14 +10,14 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server{
+public class ServerController {
     private ExecutorService executor; // will run players
     private ServerSocket server; // server socket
     private SockServer[] sockServer; // Array of objects to be threaded
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
 
-    public Server() {
+    public ServerController() {
         sockServer = new SockServer[100]; // allocate array for up to 100 server threads
         executor = Executors.newFixedThreadPool(100); // create thread pool
 
