@@ -62,8 +62,13 @@ public class CanvasController {
     private ExecutorService executor;
     private String username = "Guest";
     private volatile boolean connected = false;
+
+    //Track last point for both local and remote drawing
     private double lastX;
     private double lastY;
+    private double remoteLastX;
+    private double remoteLastY;
+    private boolean remoteFirstPoint = true;
 
     // TODO Make logic to change between drawing styles (hardcoded for now)
     private static final double BRUSH_SIZE = 4.0;
@@ -110,13 +115,21 @@ public class CanvasController {
             lastX = x;
             lastY = y;
         });
-        drawingCanvas.setOnMouseReleased(event -> {});
+        drawingCanvas.setOnMouseReleased(event -> {
+            // Reset remote drawing tracking when local drawing stops
+            if(connected) {
+                remoteFirstPoint = false;
+            }
+        });
     }
 
     @FXML
     private void clearCanvas(){
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+
+        //Reset remote drawing state
+        remoteFirstPoint = true;
 
         if(connected) {
             Message clearMessage = Message.createClearMessage();
@@ -218,7 +231,12 @@ public class CanvasController {
             drawRemotePoint(drawData);
 
         } else if (messageType.equals(Message.CLEAR)) {
-            Platform.runLater(this::clearCanvas);
+            //Clear canvas when receiving clear from server
+            Platform.runLater(() -> {
+                GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+                gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+                remoteFirstPoint = false;
+            });
             displayMessage("[Canvas cleared]\n");
 
         } else {
@@ -241,13 +259,26 @@ public class CanvasController {
             gc.setStroke(color);
             gc.setLineWidth(drawData.getSize());
 
-            //Draws small line from the point to itself (dot)
-            //TODO track previous points for smooth lines
             double x = drawData.getX();
             double y = drawData.getY();
 
-            gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
-                    drawData.getSize(), drawData.getSize());
+            //Calculate distance from last point
+            double distance = Math.sqrt(Math.pow(x - remoteLastX, 2) + Math.pow(y - remoteLastY, 2));
+
+            //If distance is too large (pen lifted) or first point, draw a dot
+            //Threshold of 50 pixels
+
+            if(remoteFirstPoint || distance > 9) {
+                //First point - just draw a dot
+                gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
+                        drawData.getSize(), drawData.getSize());
+                remoteFirstPoint = false;
+            }else{
+                gc.strokeLine(remoteLastX, remoteLastY, x, y);
+            }
+
+            remoteLastX = x;
+            remoteLastY = y;
         });
     }
 
