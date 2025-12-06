@@ -115,9 +115,9 @@ public class ServerController {
     /**
      * Broadcasts a message to all active clients.
      * Thread-safe method for sending to all clients.
-     * @param message to be broadcasted
+     * @param message Message to be broadcasted
      */
-    private void broadcastMessage(String message){
+    private void broadcastMessage(Message message){
         for(int i = 1; i <= MAX_CLIENTS; i++){
             if(sockServer[i] != null && sockServer[i].alive){
                 sockServer[i].sendData(message);
@@ -131,7 +131,7 @@ public class ServerController {
      * @param message String to be broadcasted
      * @param excludeID Index of client not to send info to
      */
-    private void broadcastExcept(String message, int excludeID){
+    private void broadcastExcept(Message message, int excludeID){
         for(int i = 1; i <= MAX_CLIENTS; i++){
             if(i != excludeID && sockServer[i] != null && sockServer[i].alive){
                 sockServer[i].sendData(message);
@@ -267,22 +267,23 @@ public class ServerController {
          * @throws IOException if communication fails
          */
         private void processConnection() throws IOException {
-            sendData("CONNECTED:" + myConID);
+            //Send CONNECTED Message to client
+            sendData(Message.createConnectedMessage(myConID);
             displayMessage(myConID, "Client " + myConID + " is ready to play \n");
 
             while(alive){
                 try{
                     //Blocks here waiting for client message
-                    String message = (String) input.readObject();
+                    Message message = (Message) input.readObject();
 
                     // Check for termination
-                    if(message.equals("TERMINATE")){
+                    if(message.getMessageType().equals(Message.TERMINATE)){
                         displayMessage(myConID, "Client " + myConID + " terminated connection");
                         break;
                     }
 
                     // Log received message to this client's display
-                    displayMessage(myConID, "RECV: " + message + "\n");
+                    displayMessage(myConID, "RECV: " + message.toString() + "\n");
 
                     // Process the game message
                     handleGameMessage(message);
@@ -304,42 +305,45 @@ public class ServerController {
          * - CLEAR -> Clear all canvases
          * @param message String message to handle
          */
-        private void handleGameMessage(String message){
+        private void handleGameMessage(Message message){
+            String messageType = message.getMessageType();
+
             //Chat message, broadcast to all
-            if(message.startsWith("CHAT:")){
-                displayMessage(myConID, "Broadcasting chat to all clients\n");
+            if(messageType.equals(Message.CHAT)){
+                Message.ChatData chatData = message.parseChatMessage();
+                displayMessage(myConID, "Broadcasting chat from " + chatData.getUsername() + "\n");
                 broadcastMessage(message);
             }
 
-            else if(message.startsWith("DRAW:")){
+            else if(messageType.equals(Message.DRAW)){
                 displayMessage(myConID, "Broadcasting drawing point\n");
                 broadcastExcept(message, myConID);
             }
 
-            else if(message.startsWith("GUESS:")){
-                String[] parts = message.split(":", 3);
-                if(parts.length >= 3){
-                    String username = parts[1];
-                    String guess = parts[2];
+            else if(messageType.equals(Message.GUESS)){
+                Message.GuessData guessData = message.parseGuessMessage();
+                String username = guessData.getUsername();
+                String guess = guessData.getGuess();
 
-                    displayMessage(myConID, "Player guessed: " + guess + "\n");
+                displayMessage(myConID, "Player " + username + " guessed: " + guess + "\n");
 
-                    // TODO: implement game logic
-                    // check if guess matches current word
-                    // award points if correct
 
-                    //filler broadcasting guess
-                    broadcastMessage("CHAT:SYSTEM:" + username + "guessed: " +  guess);
-                }
+                // TODO: implement game logic
+                // check if guess matches current word
+                // award points if correct
+
+                //filler broadcasting guess
+                Message systemMessage = Message.createChatMessage("SYSTEM", username + " guessed: " + guess);
+                broadcastMessage(systemMessage);
             }
 
-            else if(message.equals("CLEAR")){
+            else if(messageType.equals(Message.CLEAR)){
                 displayMessage(myConID, "Broadcasting canvas clear\n");
-                broadcastMessage("CLEAR");
+                broadcastMessage(message);
             }
 
             else{
-                displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
+                displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message.toString() + "\n");
             }
         }
 
@@ -371,14 +375,14 @@ public class ServerController {
          * Synchronized to prevent concurrent write conflicts
          * @param message String message to be sent
          */
-        private void sendData(String message) {
+        private void sendData(Message message) {
             try // send object to client
             {
                 synchronized (output) {
                     output.writeObject(message);
                     output.flush();
                 }
-                displayMessage(myConID, "SENT: " + message + "\n");
+                displayMessage(myConID, "SENT: " + message.toString() + "\n");
             }
             catch (IOException ioException) {
                 displayMessage(myConID,"ERROR sending: " + ioException.getMessage() + "\n");
