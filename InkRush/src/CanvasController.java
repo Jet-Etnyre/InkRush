@@ -51,7 +51,7 @@ public class CanvasController {
     @FXML
     private Label wordLabel;
 
-    private static final String SERVER_HOST = "localhost";
+    private static final String SERVER_HOST = "localhost"; // fix how to connect to the server, right now it's by writing out server's IP address
     private static final int SERVER_PORT = 23596;
 
     private Socket connection;
