@@ -20,19 +20,23 @@
 
     <GridPane hgap="10" vgap="10">
         <children>
-            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <TextField fx:id="playerNameField" prefWidth="250" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+            <Label text="Server IP:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <TextField fx:id="ipAddressField" prefWidth="250" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <TextField fx:id="playerNameField" prefWidth="250" GridPane.columnIndex="1" GridPane.rowIndex="1" />
         </children>
-      <columnConstraints>
-         <ColumnConstraints />
-         <ColumnConstraints />
-      </columnConstraints>
-      <rowConstraints>
-         <RowConstraints />
-      </rowConstraints>
+        <columnConstraints>
+            <ColumnConstraints />
+            <ColumnConstraints />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints />
+            <RowConstraints />
+        </rowConstraints>
     </GridPane>
 
-    <Button fx:id="joinButton" onAction="#onJoinClicked" prefWidth="130" text="Join Game" />
+    <Button fx:id="joinButton" text="Join Game" prefWidth="130" onAction="#onJoinClicked"/>
 
     <Label text="Players:">
         <font>
