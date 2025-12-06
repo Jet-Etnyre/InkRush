@@ -48,9 +48,6 @@ public class CanvasController {
     // --- INTEGRATION CHANGE END ---
 
     @FXML
-    private Button sendGuessButton;
-
-    @FXML
     private Label wordLabel;
 
     private static final String SERVER_HOST = "localhost"; // fix how to connect to the server, right now it's by writing out server's IP address
