@@ -76,8 +76,8 @@
           <Canvas fx:id="drawingCanvas" height="300" width="500" />
          <VBox alignment="CENTER" prefHeight="300.0" prefWidth="222.0">
             <children>
-                  <Button fx:id="clearButton" alignment="CENTER" prefHeight="51.0" prefWidth="84.0" text="Clear" textAlignment="CENTER">
-                  <font>
+                <Button fx:id="clearButton" alignment="CENTER" prefHeight="51.0" prefWidth="84.0" text="Clear" textAlignment="CENTER" onAction="#clearCanvas">
+                <font>
                      <Font name="System Bold" size="18.0" />
                   </font>
                </Button>
