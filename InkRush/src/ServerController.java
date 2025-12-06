@@ -268,7 +268,7 @@ public class ServerController {
          */
         private void processConnection() throws IOException {
             //Send CONNECTED Message to client
-            sendData(Message.createConnectedMessage(myConID);
+            sendData(Message.createConnectedMessage(myConID));
             displayMessage(myConID, "Client " + myConID + " is ready to play \n");
 
             while(alive){

@@ -178,7 +178,7 @@ public class CanvasController {
             int clientID = message.parseConnectedMessage();
             displayMessage("You are Client " + clientID + "\n");
 
-        } else if (message.startsWith("CHAT:")) {
+        } else if (messageType.equals(Message.CHAT)) {
             // Chat message format: CHAT:username:message
             Message.ChatData chatData = message.parseChatMessage();
             String user = chatData.getUsername();
@@ -293,7 +293,7 @@ public class CanvasController {
 
         try {
             if (output != null) {
-                sendToServer(Message.createTerminateMessage);
+                sendToServer(Message.createTerminateMessage());
                 output.close();
             }
             if (input != null) {
