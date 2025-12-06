@@ -318,12 +318,7 @@ public class ServerController {
         /**
          * Handles different type of game messages.
          * Routes messages accordingly based on type.
-         * Message Protocol:
-         * - CHAT:username:message -> broadcast to all clients
-         * - DRAW:x,y,color,size -> Broadcast to all except drawer
-         * - GUESS:username:word -> Check if correct, update scores
-         * - CLEAR -> Clear all canvases
-         *
+         * Message Protocol handled by Message class
          * @param message String message to handle
          */
         private void handleGameMessage(Message message) {
