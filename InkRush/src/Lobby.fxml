@@ -2,20 +2,43 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<VBox spacing="20" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="LobbyController"
-      prefWidth="600" prefHeight="400">
+<VBox prefHeight="420" prefWidth="600" spacing="18" style="-fx-background-color: #5edbcd;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="LobbyController">
+
+    <Label text="Lobby">
+        <font>
+            <Font size="24" />
+        </font>
+    </Label>
 
     <GridPane hgap="10" vgap="10">
         <children>
-            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-            <TextField fx:id="playerNameField" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <TextField fx:id="playerNameField" prefWidth="250" GridPane.columnIndex="1" GridPane.rowIndex="0" />
         </children>
+      <columnConstraints>
+         <ColumnConstraints />
+         <ColumnConstraints />
+      </columnConstraints>
+      <rowConstraints>
+         <RowConstraints />
+      </rowConstraints>
     </GridPane>
 
-    <Button fx:id="joinButton" text="Join Lobby" />
+    <Button fx:id="joinButton" prefWidth="130" text="Join Lobby" />
 
+    <Label text="Players:">
+        <font>
+            <Font size="18" />
+        </font>
+    </Label>
+
+    <ListView fx:id="playersListView" prefHeight="200" prefWidth="500" />
 </VBox>
