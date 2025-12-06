@@ -1,6 +1,3 @@
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -13,7 +10,21 @@ import java.util.concurrent.Executors;
 //import for the server GUI
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
+import javafx.application.Platform;
+import org.w3c.dom.Text;
+
+/**
+ * Controller for InkRush game Server.
+ * Manages up to 5 client connections with dedicated display areas for each client to show incoming game states.
+ * Uses executor service for multithreaded client handling with JavaFX Task patter.
+ *
+ * All GUI update are handled through the JavaFX Application Thread. The sockservers are threads for each client, performing tasks
+ *  and communicating back with the JFXAT to update the server GUI
+ */
 public class ServerController {
+    private static final int PORT = 23596;
+    private static final int MAX_CLIENTS = 5;
+
     @FXML
     private TextArea displayField1;
 
@@ -29,141 +40,208 @@ public class ServerController {
     @FXML
     private TextArea displayField5;
 
-
+    private TextArea[] displayFields;
     private ExecutorService executor; // will run players
     private ServerSocket server; // server socket
     private SockServer[] sockServer; // Array of objects to be threaded
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
 
-    public ServerController() {
-        sockServer = new SockServer[100]; // allocate array for up to 100 server threads
-        executor = Executors.newFixedThreadPool(100); // create thread pool
+    /**
+     * Initialize the controller after FXML is loaded.
+     * Sets up the display field array and ExecutorService
+     */
+    @FXML
+    public void initialize() {
+        displayFields = new TextArea[]{
+                null, // index 0
+                displayField1,
+                displayField2,
+                displayField3,
+                displayField4,
+                displayField5
+        };
 
-        enterField = new JTextField(); // create enterField
-        enterField.setEditable(false);
-        enterField.addActionListener(
-                new ActionListener() {
-                    // send message to client
-                    public void actionPerformed(ActionEvent event) {
-                        // Just got text from Server GUI Textfield
-                        // Now send this to each client -- broadcast mode
-                        for (int i = 1; i <= counter; i++) {
-                            if (sockServer[i].alive == true)
-                                sockServer[i].sendData(event.getActionCommand());
-                        }
-                        enterField.setText("");
-                    } // end method actionPerformed
-                } // end anonymous inner class
-        ); // end call to addActionListener
+        // Initialize display fields
+        for(int i = 1; i <= MAX_CLIENTS; i++) {
+            displayFields[i].setEditable(false);
+            displayFields[i].setText("Waiting for client " + i + " . . . \n");
+        }
 
-        add(enterField, BorderLayout.NORTH);
+        sockServer = new SockServer[MAX_CLIENTS+1];
+        executor = Executors.newFixedThreadPool(MAX_CLIENTS);
+    }
 
-        displayArea = new JTextArea(); // create displayArea
-        add(new JScrollPane(displayArea), BorderLayout.CENTER);
-
-        setSize(300, 150); // set size of window
-        setVisible(true); // show window
-    } // end Server constructor
-
-    // set up and run server
+    /**
+     * Starts the server in a background thread.
+     * Accept up to 5 client connections.
+     */
     public void runServer() {
-        try // set up server to receive connections; process connections
-        {
-            server = new ServerSocket(23555, 100); // create ServerSocket
+      Runnable serverTask = new Runnable() {
+          @Override
+          public void run(){
+              try{
+                  server = new ServerSocket(PORT, MAX_CLIENTS);
+                  displayMessageToAll("[Server] Server started on port " + PORT + "\n");
 
-            while (true) {
-                try {
-                    //create a new runnable object to serve the next client to call in
-                    sockServer[counter] = new SockServer(counter);
-                    // make that new object wait for a connection on that new server object
-                    sockServer[counter].waitForConnection();
-                    nClientsActive++;
-                    // launch that server object into its own new thread
-                    executor.execute(sockServer[counter]);
-                    // then, continue to create another object and wait (loop)
+                  //Only create MAX_CLIENTS clients
+                  while(counter <= MAX_CLIENTS) {
+                      try{
+                          sockServer[counter] = new SockServer(counter, displayFields[counter]);
+                          sockServer[counter].waitForConnection();
 
-                } // end try
-                catch (EOFException eofException) {
-                    displayMessage("\nServer terminated connection");
-                } // end catch
-                finally {
-                    ++counter;
-                } // end finally
-            } // end while
-        } // end try
-        catch (IOException ioException) {
-            ioException.printStackTrace();
-        } // end catch
-    } // end method runServer
+                          synchronized (ServerController.this) {
+                              nClientsActive++;
+                          }
 
-    // manipulates displayArea in the event-dispatch thread
-    private void displayMessage(final String messageToDisplay) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-                    public void run() // updates displayArea
-                    {
-                        displayArea.append(messageToDisplay); // append message
-                    } // end method run
-                } // end anonymous inner class
-        ); // end call to SwingUtilities.invokeLater
-    } // end method displayMessage
+                          executor.execute(sockServer[counter]);
+                      } catch (EOFException e) {
+                          displayMessageToAll("[SERVER] Connection Terminated \n");
+                      } finally{
+                          counter++;
+                      }
+                  }
 
-    // manipulates enterField in the event-dispatch thread
-    private void setTextFieldEditable(final boolean editable) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-                    public void run() // sets enterField's editability
-                    {
-                        enterField.setEditable(editable);
-                    } // end method run
-                }  // end inner class
-        ); // end call to SwingUtilities.invokeLater
-    } // end method setTextFieldEditable
+                  displayMessageToAll("[Server] Server full - " + MAX_CLIENTS + " clients connected.");
+              } catch (IOException ioException) {
+                  displayMessageToAll("[Server] Error: " + ioException.getMessage());
+              }
+          }
+      };
+
+      executor.execute(serverTask);
+    }
+
+    /**
+     * Broadcasts a message to all active clients.
+     * Thread-safe method for sending to all clients.
+     * @param message to be broadcasted
+     */
+    private void broadcastMessage(String message){
+        for(int i = 1; i <= MAX_CLIENTS; i++){
+            if(sockServer[i] != null && sockServer[i].alive){
+                sockServer[i].sendData(message);
+            }
+        }
+    }
+
+    /**
+     * Broadcasts to all clients except one.
+     * Used to display drawing on guesser screens.
+     * @param message String to be broadcasted
+     * @param excludeID Index of client not to send info to
+     */
+    private void broadcastExcept(String message, int excludeID){
+        for(int i = 1; i <= MAX_CLIENTS; i++){
+            if(i != excludeID && sockServer[i] != null && sockServer[i].alive){
+                sockServer[i].sendData(message);
+            }
+        }
+    }
+
+    /**
+     * Displays a message in specific client's TextArea.
+     * Thread-safe GUI update using Platform.runLater().
+     *
+     * @param clientID client display field to update (1 to MAX_CLIENTS)
+     * @param message
+     */
+    private void displayMessage(final int clientID, final String message) {
+        if(clientID < 1 || clientID > MAX_CLIENTS){
+            return;
+        }
+
+        Platform.runLater(() ->{
+            displayFields[clientID].appendText(message);
+        });
+    }
+
+    /**
+     * Displays a message to all client fields in server gui
+     * @param message String to be displayed
+     */
+    private void displayMessageToAll(final String message) {
+        Platform.runLater(() ->{
+            for (int i = 1; i <= MAX_CLIENTS; i++) {
+                displayFields[i].appendText(message);
+            }
+        });
+    }
 
     /* This new Inner Class implements Runnable and objects instantiated from this
      * class will become server threads each serving a different client
+     */
+
+    /**
+     * SockServer inner class implements Runnable for handling a single client connection.
+     * Each client gets its own dedicated TextArea for displaying activity.
+     *
+     * Workflow:
+     * 1. Client connects, waitForConnection completes
+     * 2. ExecutorService while run() method runs in background thread
+     * 3. getStreams sets up the I/O with server/client
+     * 4. processConnection() loop waiting for receiving messages
+     * 5. Client disconnects, closeConnection() cleans up
      */
     private class SockServer implements Runnable {
         private ObjectOutputStream output; // output stream to client
         private ObjectInputStream input; // input stream from client
         private Socket connection; // connection to client
         private int myConID;
-        private boolean alive = false;
+        private TextArea myDisplay;
+        private volatile boolean alive = false;
 
-        public SockServer(int counterIn) {
+        /**
+         * Creates the handler for specific client
+         *
+         * @param counterIn connection id of client
+         * @param displayField TextArea associated with client
+         */
+        public SockServer(int counterIn, TextArea displayField) {
             myConID = counterIn;
+            myDisplay = displayField;
         }
 
+        /**
+         * Main execution method running in background thread.
+         * Handles entire client connection workflow.
+         */
         public void run() {
+            alive = true;
             try {
-                alive = true;
-                try {
-                    getStreams(); // get input & output streams
-                    processConnection(); // process connection
-                    nClientsActive--;
-
-                } // end try
-                catch (EOFException eofException) {
-                    displayMessage("\nServer" + myConID + " terminated connection");
-                } finally {
-                    closeConnection(); //  close connection
-                }// end catch
+                getStreams(); // get input & output streams
+                processConnection(); // process connection
             } // end try
-            catch (IOException ioException) {
-                ioException.printStackTrace();
-            } // end catch
-        } // end try
+            catch (EOFException eofException) {
+                displayMessage(myConID, "Client " + myConID + " terminated connection");
+            } catch (Exception e) {
+                displayMessage(myConID, "Error:  " + e.getMessage() + "\n");
+            } finally {
+                synchronized (ServerController.this) {
+                    nClientsActive--;
+                }
+                closeConnection(); //  close connection
+            }
+        }
 
-        // wait for connection to arrive, then display connection info
+        /**
+         * Wait for client to connect.
+         * Called before task execution.
+         *
+         * @throws IOException if connection fails
+         */
         private void waitForConnection() throws IOException {
-
-            displayMessage("Waiting for connection" + myConID + "\n");
+            displayMessage(myConID,"Waiting for Client " + myConID + " . . .\n");
             connection = server.accept(); // allow server to accept connection
-            displayMessage("Connection " + myConID + " received from: " +
+            displayMessage(myConID,"Client " + myConID + " connected from: " +
                     connection.getInetAddress().getHostName());
-        } // end method waitForConnection
+        }
 
+        /**
+         * Sets up input and output streams for communication
+         *
+         * @throws IOException if stream creation fails
+         */
         private void getStreams() throws IOException {
             // set up output stream for objects
             output = new ObjectOutputStream(connection.getOutputStream());
@@ -172,62 +250,139 @@ public class ServerController {
             // set up input stream for objects
             input = new ObjectInputStream(connection.getInputStream());
 
-            displayMessage("\nGot I/O streams\n");
-        } // end method getStreams
+            displayMessage(myConID,"Streams ready for Client " +  myConID + " . . .\n");
+        }
 
-        // process connection with client
+        /**
+         * Main message processing loop.
+         * Runs continuously, blocking at readObject() until messages arrive
+         *
+         * Message flow:
+         * 1. Client draws and sends info message
+         * 2. this method retrieves it and logs to display field
+         * 3. handleGameMessage() processes it
+         * 4. broadcastExcept() sends to other clients
+         * 5. Loop continues, waiting for next message
+         *
+         * @throws IOException if communication fails
+         */
         private void processConnection() throws IOException {
-            String message = "Connection " + myConID + " successful";
-            sendData(message); // send connection successful message
+            sendData("CONNECTED:" + myConID);
+            displayMessage(myConID, "Client " + myConID + " is ready to play \n");
 
-            // enable enterField so server user can send messages
-            setTextFieldEditable(true);
+            while(alive){
+                try{
+                    //Blocks here waiting for client message
+                    String message = (String) input.readObject();
 
-            do // process messages sent from client
-            {
-                try // read message and display it
-                {
-                    message = (String) input.readObject(); // read new message
-                    displayMessage("\n" + myConID + message); // display message
-                } // end try
-                catch (ClassNotFoundException classNotFoundException) {
-                    displayMessage("\nUnknown object type received");
-                } // end catch
+                    // Check for termination
+                    if(message.equals("TERMINATE")){
+                        displayMessage(myConID, "Client " + myConID + " terminated connection");
+                        break;
+                    }
 
-            } while (!message.equals("CLIENT>>> TERMINATE"));
-        } // end method processConnection
+                    // Log received message to this client's display
+                    displayMessage(myConID, "RECV: " + message + "\n");
 
-        // close streams and socket
-        private void closeConnection() {
-            displayMessage("\nTerminating connection " + myConID + "\n");
-            displayMessage("\nNumber of connections = " + nClientsActive + "\n");
-            alive = false;
-            if (nClientsActive == 0) {
-                setTextFieldEditable(false); // disable enterField
+                    // Process the game message
+                    handleGameMessage(message);
+
+                } catch (ClassNotFoundException e) {
+                    displayMessage(myConID, "ERROR: Unknown object type \n");
+                }
+            }
+        }
+
+        /**
+         * Handles different type of game messages.
+         * Routes messages accordingly based on type.
+         *
+         * Message Protocol:
+         * - CHAT:username:message -> broadcast to all clients
+         * - DRAW:x,y,color,size -> Broadcast to all except drawer
+         * - GUESS:username:word -> Check if correct, update scores
+         * - CLEAR -> Clear all canvases
+         * @param message String message to handle
+         */
+        private void handleGameMessage(String message){
+            //Chat message, broadcast to all
+            if(message.startsWith("CHAT:")){
+                displayMessage(myConID, "Broadcasting chat to all clients\n");
+                broadcastMessage(message);
             }
 
-            try {
-                output.close(); // close output stream
-                input.close(); // close input stream
-                connection.close(); // close socket
-            } // end try
-            catch (IOException ioException) {
-                ioException.printStackTrace();
-            } // end catch
-        } // end method closeConnection
+            else if(message.startsWith("DRAW:")){
+                displayMessage(myConID, "Broadcasting drawing point\n");
+                broadcastExcept(message, myConID);
+            }
 
+            else if(message.startsWith("GUESS:")){
+                String[] parts = message.split(":", 3);
+                if(parts.length >= 3){
+                    String username = parts[1];
+                    String guess = parts[2];
+
+                    displayMessage(myConID, "Player guessed: " + guess + "\n");
+
+                    // TODO: implement game logic
+                    // check if guess matches current word
+                    // award points if correct
+
+                    //filler broadcasting guess
+                    broadcastMessage("CHAT:SYSTEM:" + username + "guessed: " +  guess);
+                }
+            }
+
+            else if(message.equals("CLEAR")){
+                displayMessage(myConID, "Broadcasting canvas clear\n");
+                broadcastMessage("CLEAR");
+            }
+
+            else{
+                displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
+            }
+        }
+
+        /**
+         * Closes connection and cleans up resources
+         */
+        private void closeConnection() {
+            displayMessage(myConID,"\nTerminating connection " + myConID + "\n");
+            displayMessage(myConID,"\nNumber of connections = " + nClientsActive + "\n");
+            alive = false;
+
+            try{
+                if(output != null){
+                    output.close();
+                }
+                if(input != null){
+                    input.close();
+                }
+                if(connection != null){
+                    connection.close();
+                }
+            } catch (IOException e) {
+                displayMessage(myConID, "Error closing connection " + e.getMessage() + "\n");
+            }
+        }
+
+        /**
+         * Sends data to this specific client.
+         * Synchronized to prevent concurrent write conflicts
+         * @param message String message to be sent
+         */
         private void sendData(String message) {
             try // send object to client
             {
-                output.writeObject("SERVER" + myConID + ">>> " + message);
-                output.flush(); // flush output to client
-                displayMessage("\nSERVER" + myConID + ">>> " + message);
-            } // end try
+                synchronized (output) {
+                    output.writeObject(message);
+                    output.flush();
+                }
+                displayMessage(myConID, "SENT: " + message + "\n");
+            }
             catch (IOException ioException) {
-                displayArea.append("\nError writing object");
-            } // end catch
-        } // end method sendData
-
-
-    } // end class SockServer
-} // end class Server
+                displayMessage(myConID,"ERROR sending: " + ioException.getMessage() + "\n");
+            }
+        }
+    }
+}
