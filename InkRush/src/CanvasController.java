@@ -132,18 +132,25 @@ public class CanvasController {
     }
 
     @FXML
-    private void clearCanvas(){
+    private void clearCanvas() {
+        // Get graphics context and clear the entire canvas
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
-        //Reset remote drawing state
-        remoteFirstPoint = true;
+        // Reset drawing tracking variables
+        lastX = 0;
+        lastY = 0;
+        remoteFirstPoint = true;   // So next remote drawing starts fresh
+        remoteLastX = 0;
+        remoteLastY = 0;
 
-        if(connected) {
-            Message clearMessage = Message.createClearMessage();
+        // If connected, tell server to clear canvas for all players
+        if (connected) {
+            Message clearMessage = Message.createClearMessage(); // Make sure your Message class has this
             sendToServer(clearMessage);
         }
     }
+
 
     /**
      * Connects to the server and starts listening for messages.
