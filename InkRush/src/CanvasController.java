@@ -77,7 +77,6 @@ public class CanvasController {
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
         setupDrawing();
-        setupClearButton();
         connectToServer();
     }
 
@@ -112,25 +111,6 @@ public class CanvasController {
             lastY = y;
         });
         drawingCanvas.setOnMouseReleased(event -> {});
-    }
-
-    /**
-     * Sets up the clear button to clear canvas and notify server.
-     */
-    private void setupClearButton(){
-        clearCanvas();
-        if(connected) {
-            Message clearMessage = Message.createClearMessage();
-            sendToServer(clearMessage);
-        }
-    }
-
-    /**
-     * Clears the local canvas.
-     */
-    private void clearCanvass(){
-        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
     }
 
     @FXML
