@@ -41,11 +41,11 @@ public class CanvasController {
     @FXML
     private Canvas drawingCanvas;
 
+    // --- INTEGRATION CHANGE START ---
+    // Replaced playerNameField/nameButton with nameLabel
     @FXML
-    private Button nameButton;
-
-    @FXML
-    private TextField playerNameField;
+    private Label nameLabel;
+    // --- INTEGRATION CHANGE END ---
 
     @FXML
     private Button sendGuessButton;
@@ -75,6 +75,19 @@ public class CanvasController {
     private static final String BRUSH_COLOR = "#000000"; // Black
 
     /**
+     * Sets the player name from the Lobby.
+     * This restores the connection between Lobby and Game.
+     */
+    public void setPlayerName(String name) {
+        this.username = name;
+        if (nameLabel != null) {
+            nameLabel.setText(name);
+        }
+        displayMessage("Welcome, " + username + "!\n");
+    }
+
+
+    /**
      * Initializes the controller after FXML is loaded.
      * Sets up event handlers and connects to server.
      */
@@ -84,7 +97,6 @@ public class CanvasController {
         setupDrawing();
         connectToServer();
     }
-
 
     /**
      * Sets up drawing for local drawing and broadcasts drawing data to server
@@ -115,6 +127,7 @@ public class CanvasController {
             lastX = x;
             lastY = y;
         });
+
         drawingCanvas.setOnMouseReleased(event -> {
             // Reset remote drawing tracking when local drawing stops
             if(connected) {
@@ -122,6 +135,7 @@ public class CanvasController {
             }
         });
     }
+
 
     @FXML
     private void clearCanvas(){
@@ -280,29 +294,6 @@ public class CanvasController {
             remoteLastX = x;
             remoteLastY = y;
         });
-    }
-
-    /**
-     * Sets the username for this player.
-     * Called when nameButton is clicked.
-     * Updates local username and notifies server.
-     */
-    @FXML
-    private void setUsername() {
-        String newUsername = playerNameField.getText().trim();
-
-        if (newUsername.isEmpty()) {
-            displayMessage("Username cannot be empty!\n");
-            return;
-        }
-
-        username = newUsername;
-        displayMessage("Username set to: " + username + "\n");
-
-        // Disable name field after setting username
-        playerNameField.setEditable(false);
-        nameButton.setDisable(true);
-
     }
 
     /**

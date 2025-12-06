@@ -20,10 +20,10 @@
             <font>
                <Font name="System Bold" size="18.0" />
             </font></Label>
-            <TextField fx:id="playerNameField" promptText="Enter Name Here" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-         <Button fx:id="nameButton" mnemonicParsing="false" onAction="#setUsername" text="Enter" GridPane.columnIndex="2" />
+         <Label fx:id="nameLabel" text="Label" GridPane.columnIndex="3" />
         </children>
       <columnConstraints>
+         <ColumnConstraints />
          <ColumnConstraints />
          <ColumnConstraints />
          <ColumnConstraints />
@@ -44,7 +44,7 @@
         <children>
          <Button fx:id="chatButton" mnemonicParsing="false" onAction="#sendServerChat" text="Chat" />
          <TextField fx:id="chatTextInput" promptText="Enter Chats Here" />
-            <Button fx:id="clearButton" alignment="TOP_LEFT" onAction="#clearCanvas" text="Clear">
+            <Button fx:id="clearButton" alignment="TOP_LEFT" text="Clear">
             <font>
                <Font name="System Bold" size="12.0" />
             </font></Button>
