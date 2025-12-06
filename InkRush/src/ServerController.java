@@ -10,7 +10,26 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+//import for the server GUI
+import javafx.fxml.FXML;
+import javafx.scene.control.TextArea;
 public class ServerController {
+    @FXML
+    private TextArea displayField1;
+
+    @FXML
+    private TextArea displayField2;
+
+    @FXML
+    private TextArea displayField3;
+
+    @FXML
+    private TextArea displayField4;
+
+    @FXML
+    private TextArea displayField5;
+
+
     private ExecutorService executor; // will run players
     private ServerSocket server; // server socket
     private SockServer[] sockServer; // Array of objects to be threaded
