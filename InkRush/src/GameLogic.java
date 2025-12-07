@@ -2,7 +2,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.HashMap;
+
 
 /**
  * GameLogic class manages the core game mechanics for the game.
@@ -35,6 +36,8 @@ public class GameLogic {
     // Word Bank Dependency
     private WordBank wordBank; // Dependency Injection
     private String[] currentWordOptions; // store the 3 choices
+    private Map<String, Integer> wordUsageCount;
+
 
     /**
      * Creates a new GameLogic instance.
@@ -51,6 +54,7 @@ public class GameLogic {
         currentDrawerIndex = 0;
         guessCount = 0;
         currentWordOptions = null; // Initialize options field
+        wordUsageCount = new HashMap<>();
     }
     /**
      * Registers a new player in the game.
@@ -85,8 +89,18 @@ public class GameLogic {
         // select next drawer (rotates through all players)
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
+        // Create a list of words that have reached the usage limit
+        List<String> wordsToExclude = new ArrayList<>();
+        int USAGE_LIMIT = 3;
+
+        for (Map.Entry<String, Integer> entry : wordUsageCount.entrySet()) {
+            if (entry.getValue() >= USAGE_LIMIT) {
+                wordsToExclude.add(entry.getKey());
+            }
+        }
+
         // Get the three word choices from the database
-        List<String> chosenList = wordBank.getThreeWords();
+        List<String> chosenList = wordBank.getThreeWords(wordsToExclude);
         currentWordOptions = chosenList.toArray(new String[0]);
 
         // NOTE: The currentWord is NOT set here. It is set by the drawer's choice.
@@ -135,6 +149,9 @@ public class GameLogic {
         for (String option : currentWordOptions) {
             if (option.equalsIgnoreCase(word.trim())) {
                 this.currentWord = word.trim(); // Set the final word
+                //track how many times the same word has been used
+                int currentCount = wordUsageCount.getOrDefault(this.currentWord, 0);
+                wordUsageCount.put(this.currentWord, currentCount + 1);
                 this.currentWordOptions = null; // Clear options
 
                 // Rotation must happen AFTER the word is chosen for the current round
