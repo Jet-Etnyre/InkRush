@@ -19,8 +19,8 @@
 
     <GridPane prefHeight="81.0" prefWidth="720.0">
         <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="479.0" minWidth="10.0" prefWidth="479.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="329.66668701171875" minWidth="10.0" prefWidth="241.0" />
         </columnConstraints>
 
         <rowConstraints>
@@ -28,23 +28,34 @@
         </rowConstraints>
 
         <children>
-            <HBox alignment="CENTER_LEFT">
+
+            <HBox alignment="CENTER_LEFT" prefHeight="42.0" prefWidth="437.0">
                 <children>
-                    <Label prefWidth="159.0" text="Player Name:" underline="true">
-                        <font><Font name="System Bold" size="18.0" /></font>
+                    <Label prefHeight="27.0" prefWidth="143.0" text="Player Name:" underline="true">
+                        <font>
+                            <Font name="System Bold" size="18.0" />
+                        </font>
                     </Label>
-                    <Label fx:id="nameLabel">
-                        <font><Font size="14.0" /></font>
+                    <Label fx:id="nameLabel" contentDisplay="CENTER" prefHeight="20.0" prefWidth="177.0" textAlignment="CENTER" textFill="DARKORANGE">
+                        <font>
+                            <Font name="System Bold" size="16.0" />
+                        </font>
                     </Label>
+                    <Button fx:id="startGame" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="40.0" prefWidth="153.0" text="StartGame" textAlignment="CENTER">
+                        <font>
+                            <Font name="System Bold" size="18.0" />
+                        </font>
+                    </Button>
+                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="53.0" prefWidth="111.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="DARKORANGE" />
                 </children>
             </HBox>
 
             <HBox alignment="TOP_RIGHT" GridPane.columnIndex="1">
                 <children>
-                    <Label text="Score:" underline="true">
+                    <Label alignment="TOP_LEFT" prefHeight="27.0" prefWidth="63.0" text="Score:" underline="true">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
-                    <Label fx:id="scoreLabel" />
+                    <Label fx:id="scoreLabel" prefHeight="17.0" prefWidth="127.0" />
                 </children>
             </HBox>
         </children>
