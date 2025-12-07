@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 
 /**
  * Controller for the InkRush game client.
