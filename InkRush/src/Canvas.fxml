@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="677.0" prefWidth="720.0" spacing="10" style="-fx-background-color: #7af09a;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
+<VBox prefHeight="677.0" prefWidth="720.0" spacing="10" style="-fx-background-color: #FFD61E;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
 
     <GridPane prefHeight="81.0" prefWidth="720.0">
         <columnConstraints>
@@ -46,7 +46,7 @@
                             <Font name="System Bold" size="18.0" />
                         </font>
                     </Button>
-                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="53.0" prefWidth="111.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="DARKORANGE" />
+                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="53.0" prefWidth="111.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="#090909" />
                 </children>
             </HBox>
 
@@ -71,15 +71,12 @@
         </rowConstraints>
 
         <children>
-            <HBox alignment="CENTER">
+            <HBox>
                 <children>
-                    <Label text="Word:">
+                    <Label text="Word to Draw">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
-                    <Label fx:id="wordToGuessLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="195.0">
-                  <font>
-                     <Font name="System Bold Italic" size="18.0" />
-                  </font></Label>
+                    <Label fx:id="wordToGuessLabel" />
                 </children>
             </HBox>
         </children>
@@ -88,7 +85,7 @@
     <HBox spacing="15">
         <children>
 
-            <StackPane style="-fx-border-color: #2F4F4F; -fx-border-width: 5; -fx-border-radius: 8; -fx-padding: 5;">
+            <StackPane style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #2F4F4F; -fx-border-width: 5; -fx-border-radius: 8; -fx-padding: 5;">
                 <Canvas fx:id="drawingCanvas" height="300" width="500" />
             </StackPane>
 
@@ -132,24 +129,24 @@
                 <children>
                     <TextField fx:id="chatTextInput" onAction="#sendServerChat" promptText="Enter Chats Here" />
                     <Button fx:id="chatButton" onAction="#sendServerChat" text="Chat">
-                  <font>
-                     <Font name="System Bold" size="12.0" />
-                  </font></Button>
-               <Button fx:id="WordOption1" mnemonicParsing="false" text="Option 1">
-                  <font>
-                     <Font name="System Bold" size="12.0" />
-                  </font>
-               </Button>
-               <Button fx:id="WordOption2" mnemonicParsing="false" text="Option 2">
-                  <font>
-                     <Font name="System Bold" size="12.0" />
-                  </font>
-               </Button>
-               <Button fx:id="WordOption3" mnemonicParsing="false" text="Option 3">
-                  <font>
-                     <Font name="System Bold" size="12.0" />
-                  </font>
-               </Button>
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font></Button>
+                    <Button fx:id="WordOption1" mnemonicParsing="false" text="Option 1">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Button>
+                    <Button fx:id="WordOption2" mnemonicParsing="false" text="Option 2">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Button>
+                    <Button fx:id="WordOption3" mnemonicParsing="false" text="Option 3">
+                        <font>
+                            <Font name="System Bold" size="12.0" />
+                        </font>
+                    </Button>
                 </children>
             </HBox>
 
