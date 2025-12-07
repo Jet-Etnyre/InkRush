@@ -97,7 +97,7 @@ public class ServerController {
                             synchronized (ServerController.this) {
                                 nClientsActive++;
 
-                                if(currentDrawerID == -1) {
+                                if (currentDrawerID == -1) {
                                     currentDrawerID = counter;
                                     displayMessageToAll("[Server] Client " + counter + " is now the DRAWER\n");
                                 }
@@ -422,55 +422,62 @@ public class ServerController {
                 String username = message.getMessageContents();
                 gameLogic.addPlayer(myConID, username);
                 displayMessage(myConID, "Player registered: " + username + "\n");
-
-                if (gameLogic.getPlayerCount() >= 2) {
+                // Only start a round if no round is currently active
+                if (gameLogic.getPlayerCount() >= 2 && !gameLogic.isRoundActive()) {
                     startNewRound();
+                } else if (gameLogic.isRoundActive()) {
+                    // Player joined mid-round, send them current round info
+                    String word = gameLogic.getWordHint();
+                    Message roundMsg = Message.createRoundStartMessage(word, gameLogic.getTimeRemaining());
+                    sockServer[myConID].sendData(roundMsg);
+
+                    displayMessage(myConID, username + " joined ongoing round as guesser\n");
+                } else {
+                    displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
                 }
-            } else {
-                displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
             }
         }
 
-        /**
-         * Closes connection and cleans up resources
-         */
-        private void closeConnection() {
-            displayMessage(myConID, "\nTerminating connection " + myConID + "\n");
-            displayMessage(myConID, "\nNumber of connections = " + nClientsActive + "\n");
-            alive = false;
+            /**
+             * Closes connection and cleans up resources
+             */
+            private void closeConnection () {
+                displayMessage(myConID, "\nTerminating connection " + myConID + "\n");
+                displayMessage(myConID, "\nNumber of connections = " + nClientsActive + "\n");
+                alive = false;
 
-            try {
-                if (output != null) {
-                    output.close();
+                try {
+                    if (output != null) {
+                        output.close();
+                    }
+                    if (input != null) {
+                        input.close();
+                    }
+                    if (connection != null) {
+                        connection.close();
+                    }
+                } catch (IOException e) {
+                    displayMessage(myConID, "Error closing connection " + e.getMessage() + "\n");
                 }
-                if (input != null) {
-                    input.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (IOException e) {
-                displayMessage(myConID, "Error closing connection " + e.getMessage() + "\n");
             }
-        }
 
-        /**
-         * Sends data to this specific client.
-         * Synchronized to prevent concurrent write conflicts
-         *
-         * @param message String message to be sent
-         */
-        private void sendData(Message message) {
-            try // send object to client
-            {
-                synchronized (output) {
-                    output.writeObject(message);
-                    output.flush();
+            /**
+             * Sends data to this specific client.
+             * Synchronized to prevent concurrent write conflicts
+             *
+             * @param message String message to be sent
+             */
+            private void sendData (Message message){
+                try // send object to client
+                {
+                    synchronized (output) {
+                        output.writeObject(message);
+                        output.flush();
+                    }
+                    displayMessage(myConID, "SENT: " + message.toString() + "\n");
+                } catch (IOException ioException) {
+                    displayMessage(myConID, "ERROR sending: " + ioException.getMessage() + "\n");
                 }
-                displayMessage(myConID, "SENT: " + message.toString() + "\n");
-            } catch (IOException ioException) {
-                displayMessage(myConID, "ERROR sending: " + ioException.getMessage() + "\n");
             }
         }
     }
-}
