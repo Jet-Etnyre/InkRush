@@ -25,6 +25,11 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 
+//using Interpolation to solve the losing packet while drawing issue
+import javafx.animation.AnimationTimer;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * Controller for the InkRush game client.
  * Handles user input, server communication, and GUI updates.
@@ -84,6 +89,18 @@ public class CanvasController {
     private Color currentColor = Color.BLACK;
     private double currentBrushSize = 4.0;
 
+    // Animation Queue: Stores points to be drawn smoothly
+    private Queue<Message.DrawData> pointQueue = new ConcurrentLinkedQueue<>();
+    private AnimationTimer drawingLoop;
+
+    // pointer tracer
+    private double currentAnimX;
+    private double currentAnimY;
+
+    // How fast the animation catches up
+    private static final double SMOOTHING_SPEED = 1;
+
+
     /**
      * Sets the connection information (Name and IP) from the Lobby.
      * Automatically triggers the connection attempt.
@@ -129,6 +146,9 @@ public class CanvasController {
         }
 
         setupDrawing();
+
+        //start the animation loop
+        startSmoothDrawingLoop();
     }
 
     /**
@@ -213,6 +233,74 @@ public class CanvasController {
                 remoteFirstPoint = false;
             }
         });
+    }
+
+    //start the timer
+    private void startSmoothDrawingLoop() {
+        drawingLoop = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                processAnimationQueue();
+            }
+        };
+        drawingLoop.start();
+    }
+
+    private void processAnimationQueue() {
+        if (pointQueue.isEmpty()) return;
+
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
+
+        Message.DrawData target = pointQueue.peek();
+
+        // Initialize starting position if this is the first point
+        if (remoteFirstPoint) {
+            currentAnimX = target.getX();
+            currentAnimY = target.getY();
+            remoteFirstPoint = false;
+
+            // Draw initial dot
+            gc.setFill(Color.web(target.getColor()));
+            gc.fillOval(currentAnimX - target.getSize()/2, currentAnimY - target.getSize()/2,
+                    target.getSize(), target.getSize());
+            pointQueue.poll();
+            return;
+        }
+
+        // Calculate distance
+        double dx = target.getX() - currentAnimX;
+        double dy = target.getY() - currentAnimY;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // If very close, snap to it
+        if (distance < 1.0) {
+            currentAnimX = target.getX();
+            currentAnimY = target.getY();
+            pointQueue.poll();
+            return;
+        }
+
+        // If huge jump (pen lift), snap instantly
+        if (distance > 100) {
+            currentAnimX = target.getX();
+            currentAnimY = target.getY();
+            remoteFirstPoint = true;
+            pointQueue.poll();
+            return;
+        }
+
+        // MOVE SMOOTHLY towards the target
+        double moveX = currentAnimX + (dx * SMOOTHING_SPEED);
+        double moveY = currentAnimY + (dy * SMOOTHING_SPEED);
+
+        gc.setStroke(Color.web(target.getColor()));
+        gc.setLineWidth(target.getSize());
+        gc.strokeLine(currentAnimX, currentAnimY, moveX, moveY);
+
+        currentAnimX = moveX;
+        currentAnimY = moveY;
     }
 
     /**
@@ -376,6 +464,11 @@ public class CanvasController {
         }
     }
 
+    private void drawRemotePoint(Message.DrawData drawData) {
+        // Just add to queue - the AnimationTimer handles the actual drawing
+        pointQueue.add(drawData);
+    }
+
     /**
      * Handles messages received from the server.
      * Routes messages based on their type prefix.
@@ -426,40 +519,6 @@ public class CanvasController {
         }
     }
 
-    /**
-     * Draws a point received from another client
-     * Thread safe, uses platform.runlater() for gui updates
-     * @param drawData DrawData Message containing coordinates color, size
-     */
-    private void drawRemotePoint(Message.DrawData drawData) {
-        Platform.runLater(() -> {
-            GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-
-            Color color = Color.web(drawData.getColor());
-            gc.setStroke(color);
-            gc.setLineWidth(drawData.getSize());
-
-            double x = drawData.getX();
-            double y = drawData.getY();
-
-            //Calculate distance from last point
-            double distance = Math.sqrt(Math.pow(x - remoteLastX, 2) + Math.pow(y - remoteLastY, 2));
-
-            //If distance is too large (pen lifted) or first point, draw a dot
-            //Threshold of 9 pixels
-            if (remoteFirstPoint || distance > 9) {
-                //First point - just draw a dot
-                gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
-                        drawData.getSize(), drawData.getSize());
-                remoteFirstPoint = false;
-            } else {
-                gc.strokeLine(remoteLastX, remoteLastY, x, y);
-            }
-
-            remoteLastX = x;
-            remoteLastY = y;
-        });
-    }
 
     /**
      * Sends a chat message to the server.
