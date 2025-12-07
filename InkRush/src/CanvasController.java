@@ -61,10 +61,28 @@ public class CanvasController {
     @FXML
     private Label wordLabel;
 
-    // NEW FXML controls (must match your FXML fx:id names)
+    // NEW FXML controls
     @FXML private ColorPicker colorPicker;
     @FXML private Slider sizeSlider;
     @FXML private Label sizeValueLabel;
+
+    // Top Bar Controls
+    @FXML private Button startGame;
+    @FXML private Label timerLabel;
+    @FXML private Label scoreLabel;
+    @FXML private Label wordToGuessLabel;
+
+    // Word Choice Buttons
+    @FXML private Button WordOption1;
+    @FXML private Button WordOption2;
+    @FXML private Button WordOption3;
+
+    // Leaderboard Labels
+    @FXML private Label leaderboardSpot1;
+    @FXML private Label leaderboardSpot2;
+    @FXML private Label leaderboardSpot3;
+    @FXML private Label leaderboardSpot4;
+    @FXML private Label leaderboardSpot5;
 
     //Use dynamic IP logic
     private static final int SERVER_PORT = 23596;
