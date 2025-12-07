@@ -80,8 +80,6 @@ public class CanvasController {
     // Drawing tracking variables (Teammate's logic)
     private double lastX;
     private double lastY;
-    private double remoteLastX;
-    private double remoteLastY;
     private boolean remoteFirstPoint = true;
     private volatile boolean canDraw = false;
 
@@ -90,15 +88,30 @@ public class CanvasController {
     private double currentBrushSize = 4.0;
 
     // Animation Queue: Stores points to be drawn smoothly
-    private Queue<Message.DrawData> pointQueue = new ConcurrentLinkedQueue<>();
+    // Wrapper class to track if a point is the start of a new stroke
+    private static class PointRequest {
+        Message.DrawData data;
+        boolean isNewStroke;
+
+        PointRequest(Message.DrawData data, boolean isNewStroke) {
+            this.data = data;
+            this.isNewStroke = isNewStroke;
+        }
+    }
+
+    // Queue stores PointRequest instead of raw DrawData
+    private Queue<PointRequest> pointQueue = new ConcurrentLinkedQueue<>();
     private AnimationTimer drawingLoop;
+
+    // Time tracking to detect pen lifts (gaps in receiving data)
+    private long lastReceivedTime = 0;
 
     // pointer tracer
     private double currentAnimX;
     private double currentAnimY;
 
     // How fast the animation catches up
-    private static final double SMOOTHING_SPEED = 1;
+    private static final double SMOOTHING_SPEED = 0.9;
 
 
     /**
@@ -179,43 +192,41 @@ public class CanvasController {
      */
     private void setupDrawing() {
         var gc = drawingCanvas.getGraphicsContext2D();
-        gc.setLineWidth(currentBrushSize);
-        gc.setStroke(currentColor);
+        gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-        // When mouse is pressed
         drawingCanvas.setOnMousePressed(event -> {
-            if(!canDraw) {
-                return;
-            }
+            if(!canDraw) return;
+
             lastX = event.getX();
             lastY = event.getY();
 
-            // Ensure GC uses current brush when starting
+            // SEND IMMEDIATELY on click so other clients see the start point instantly
+            if(connected) {
+                Message drawMessage = Message.createDrawMessage(
+                        lastX, lastY, colorToHex(currentColor), currentBrushSize
+                );
+                sendToServer(drawMessage);
+            }
+
+            // Draw locally
             gc.setLineWidth(currentBrushSize);
             gc.setStroke(currentColor);
         });
 
-        // When mouse is dragged so moving while clicking
         drawingCanvas.setOnMouseDragged(event -> {
-            if(!canDraw) {
-                return;
-            }
+            if(!canDraw) return;
+
             double x = event.getX();
             double y = event.getY();
 
-            // Use dynamic brush values
             gc.setLineWidth(currentBrushSize);
             gc.setStroke(currentColor);
-
             gc.strokeLine(lastX, lastY, x, y);
 
             if(connected) {
-                // send hex color + size to server
                 Message drawMessage = Message.createDrawMessage(
-                        lastX,
-                        lastY,
-                        colorToHex(currentColor),
-                        currentBrushSize
+                        lastX, lastY, colorToHex(currentColor), currentBrushSize
                 );
                 sendToServer(drawMessage);
             }
@@ -225,13 +236,7 @@ public class CanvasController {
         });
 
         drawingCanvas.setOnMouseReleased(event -> {
-            // Reset remote drawing tracking when local drawing stops
-            if(!canDraw) {
-                return;
-            }
-            if(connected) {
-                remoteFirstPoint = false;
-            }
+            if(!canDraw) return;
         });
     }
 
@@ -246,6 +251,10 @@ public class CanvasController {
         drawingLoop.start();
     }
 
+    /**
+     * Processes the queue of incoming points.
+     * Uses a loop to "Speed Read" the queue if it gets too full.
+     */
     private void processAnimationQueue() {
         if (pointQueue.isEmpty()) return;
 
@@ -253,54 +262,79 @@ public class CanvasController {
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-        Message.DrawData target = pointQueue.peek();
-
-        // Initialize starting position if this is the first point
-        if (remoteFirstPoint) {
-            currentAnimX = target.getX();
-            currentAnimY = target.getY();
-            remoteFirstPoint = false;
-
-            // Draw initial dot
-            gc.setFill(Color.web(target.getColor()));
-            gc.fillOval(currentAnimX - target.getSize()/2, currentAnimY - target.getSize()/2,
-                    target.getSize(), target.getSize());
-            pointQueue.poll();
-            return;
+        // SPEED UP LOGIC:
+        // If queue has > 2 points, draw up to 10 points per frame (Catch up!)
+        // Otherwise, draw 1 point per frame (Smooth)
+        int pointsToProcess;
+        if (pointQueue.size() > 2) {
+            pointsToProcess = 10;
+        } else {
+            pointsToProcess = 1;
         }
 
-        // Calculate distance
-        double dx = target.getX() - currentAnimX;
-        double dy = target.getY() - currentAnimY;
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        for (int i = 0; i < pointsToProcess; i++) {
+            // Stop if we run out of points mid-loop
+            if (pointQueue.isEmpty()) return;
 
-        // If very close, snap to it
-        if (distance < 1.0) {
-            currentAnimX = target.getX();
-            currentAnimY = target.getY();
-            pointQueue.poll();
-            return;
+            PointRequest req = pointQueue.peek();
+            Message.DrawData target = req.data;
+
+            // CASE 1: New Stroke (Pen Lift)
+            if (remoteFirstPoint || req.isNewStroke) {
+                currentAnimX = target.getX();
+                currentAnimY = target.getY();
+                remoteFirstPoint = false;
+
+                gc.setFill(Color.web(target.getColor()));
+                gc.fillOval(currentAnimX - target.getSize()/2, currentAnimY - target.getSize()/2,
+                        target.getSize(), target.getSize());
+
+                pointQueue.poll();
+                continue; // Move to next iteration
+            }
+
+            double dx = target.getX() - currentAnimX;
+            double dy = target.getY() - currentAnimY;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            // CASE 2: Very close? Just snap.
+            if (distance < 1.0) {
+                gc.setStroke(Color.web(target.getColor()));
+                gc.setLineWidth(target.getSize());
+                gc.strokeLine(currentAnimX, currentAnimY, target.getX(), target.getY());
+
+                currentAnimX = target.getX();
+                currentAnimY = target.getY();
+
+                pointQueue.poll();
+                continue;
+            }
+
+            // CASE 3: Calculate Speed
+            // If we are in the middle of a loop (catching up), go Instant (1.0).
+            // Otherwise, use the smooth speed.
+            double actualSpeed;
+            if (i > 0) {
+                actualSpeed = 1.0;
+            } else {
+                actualSpeed = SMOOTHING_SPEED;
+            }
+
+            double moveX = currentAnimX + (dx * actualSpeed);
+            double moveY = currentAnimY + (dy * actualSpeed);
+
+            gc.setStroke(Color.web(target.getColor()));
+            gc.setLineWidth(target.getSize());
+            gc.strokeLine(currentAnimX, currentAnimY, moveX, moveY);
+
+            currentAnimX = moveX;
+            currentAnimY = moveY;
+
+            // If we moved 100% of the way (speed 1.0), remove the point
+            if (actualSpeed >= 1.0) {
+                pointQueue.poll();
+            }
         }
-
-        // If huge jump (pen lift), snap instantly
-        if (distance > 100) {
-            currentAnimX = target.getX();
-            currentAnimY = target.getY();
-            remoteFirstPoint = true;
-            pointQueue.poll();
-            return;
-        }
-
-        // MOVE SMOOTHLY towards the target
-        double moveX = currentAnimX + (dx * SMOOTHING_SPEED);
-        double moveY = currentAnimY + (dy * SMOOTHING_SPEED);
-
-        gc.setStroke(Color.web(target.getColor()));
-        gc.setLineWidth(target.getSize());
-        gc.strokeLine(currentAnimX, currentAnimY, moveX, moveY);
-
-        currentAnimX = moveX;
-        currentAnimY = moveY;
     }
 
     /**
@@ -319,12 +353,9 @@ public class CanvasController {
         lastX = 0;
         lastY = 0;
         remoteFirstPoint = true;
-        remoteLastX = 0;
-        remoteLastY = 0;
 
-        // If connected, tell server to clear canvas for all players
         if (connected) {
-            Message clearMessage = Message.createClearMessage(); // Make sure your Message class has this
+            Message clearMessage = Message.createClearMessage();
             sendToServer(clearMessage);
         }
     }
@@ -464,9 +495,18 @@ public class CanvasController {
         }
     }
 
+    /**
+     * Receives data from server and queues it for the animation loop.
+     * Detects pen lifts based on time delays.
+     */
     private void drawRemotePoint(Message.DrawData drawData) {
-        // Just add to queue - the AnimationTimer handles the actual drawing
-        pointQueue.add(drawData);
+        long now = System.currentTimeMillis();
+
+        // If > 150ms delay, assume new stroke
+        boolean isNewStroke = (now - lastReceivedTime > 150);
+        lastReceivedTime = now;
+
+        pointQueue.add(new PointRequest(drawData, isNewStroke));
     }
 
     /**
