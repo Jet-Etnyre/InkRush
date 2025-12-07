@@ -25,6 +25,7 @@ public class Message implements Serializable {
     public static final String WORD_SELECTED = "WORD_SELECTED";
     public static final String LEADERBOARD = "LEADERBOARD";
     public static final String SCORE = "SCORE";
+    public static final String ROUND_UPDATE = "ROUND_UPDATE";
 
     public static final String USERNAME = "USERNAME";
 
@@ -94,6 +95,14 @@ public class Message implements Serializable {
      */
     public String getMessageContents() {
         return messageContents;
+    }
+
+    /**
+     * Parses message for round number
+     * @return Integer
+     */
+    public int parseRoundUpdateMessage() {
+        return Integer.parseInt(messageContents);
     }
 
     /**
@@ -233,6 +242,15 @@ public class Message implements Serializable {
      */
     public static Message createScoreMessage(int score) {
         return new Message(SCORE, String.valueOf(score));
+    }
+
+    /**
+     * Creates a ROUND_UPDATE message
+     * @param currentRound int round #
+     * @return message object
+     */
+    public static Message createRoundUpdateMessage(int currentRound) {
+        return new Message(ROUND_UPDATE, String.valueOf(currentRound));
     }
 
     /**

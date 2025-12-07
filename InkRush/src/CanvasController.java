@@ -478,8 +478,7 @@ public class CanvasController {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
-            }
-        } catch (IOException e) {
+            }} catch (IOException e) {
             // Ignored because we are already handling an error
         }
     }
@@ -643,6 +642,33 @@ public class CanvasController {
                 startRoundTimer(duration);
             });
 
+        } else if (messageType.equals(Message.ROUND_UPDATE)) {
+            int round = message.parseRoundUpdateMessage();
+            Platform.runLater(this::stopRoundTimer);
+            canDraw = false;
+
+            Platform.runLater(() -> {
+                // 1. Reset the cursor
+                drawingCanvas.setStyle("-fx-cursor: default;");
+
+                // 2. Update the Round Label
+                if (roundLabel != null) {
+                    if (round == 0) {
+                        roundLabel.setText("Waiting...");
+                    } else {
+                        roundLabel.setText("Round: " + round + "/5");
+                    }
+                }
+                if (wordToGuessLabel != null) {
+                    wordToGuessLabel.setText("Waiting for drawer...");
+                }
+                if (wordLabel != null) {
+                    wordLabel.setText("");
+                }
+                if (timerLabel != null) {
+                    timerLabel.setText("0");
+                }
+            });
         } else if (messageType.equals(Message.LEADERBOARD)) {
             // Format: "Name1,Score1,Name2,Score2..."
             String[] parts = message.getMessageContents().split(",");
@@ -735,6 +761,15 @@ public class CanvasController {
             }
         };
         roundTimer.start();
+    }
+
+    /**
+     * Stops the round timer immediately.
+     */
+    private void stopRoundTimer() {
+        if (roundTimer != null) {
+            roundTimer.stop();
+        }
     }
 
     private void sendWordSelection(String word) {
