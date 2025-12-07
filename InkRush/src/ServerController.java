@@ -242,6 +242,12 @@ public class ServerController {
      * Begins phase 2 of the game flow: selecting the drawer and having them choose a word
      */
     private void startPhase2_WordSelection() {
+        // Increment Round Tracking
+        gameLogic.incrementRound();
+
+        // Broadcast Round Number to Clients
+        broadcastMessage(Message.createRoundUpdateMessage(gameLogic.getCurrentRound()));
+
         broadcastMessage(Message.createClearMessage());
 
         // startNewRound() returns {DrawerID, W1, W2, W3}
@@ -354,12 +360,67 @@ public class ServerController {
         // Send Leaderboard Update
         broadcastLeaderboard();
 
-        // 4. Intermission: Wait 5 seconds, then go back to Phase 2
-        PauseTransition intermission = new PauseTransition(Duration.seconds(5));
-        intermission.setOnFinished(event -> {
-            startPhase2_WordSelection();
+        // 4. check if gae over / intermission
+        if (gameLogic.isGameComplete()) {
+            handleGameOver(); // Helper method defined below
+        }else{
+            PauseTransition intermission = new PauseTransition(Duration.seconds(5));
+            intermission.setOnFinished(event -> {startPhase2_WordSelection();});
+            intermission.play();
+        }
+    }
+
+    /**
+     * handleGameOver method
+     * Announces the winner and then calls method to transition to phase 1
+     */
+    private void handleGameOver() {
+        String winnerText = gameLogic.getWinnerDescription();
+
+        // 1. Announce Winner
+        Message winMsg = Message.createChatMessage("SERVER", "GAME OVER! Winner: " + winnerText);
+        broadcastMessage(winMsg);
+
+        displayMessageToAll("[Server] Game Complete. Winner: " + winnerText + "\n");
+
+        // 2. Wait 6 seconds, then Reset to Lobby (phase 1)
+        PauseTransition gameOverDelay = new PauseTransition(Duration.seconds(6));
+        gameOverDelay.setOnFinished(event -> {
+            resetGameToLobby();
         });
-        intermission.play();
+        gameOverDelay.play();
+    }
+
+    /**
+     * resetGameToLobby method
+     * resets the game state for users to go back to phase 1, the pre game.
+     */
+    private void resetGameToLobby() {
+        // 1. Reset Logic
+        gameLogic.resetGame();
+        gameStarted = false;
+        currentDrawerID = -1;
+
+        // 2. Clear Clients
+        broadcastMessage(Message.createClearMessage());
+        broadcastMessage(Message.createChatMessage("SERVER", "Lobby has been reset. Waiting for leader..."));
+
+        // 3. Reset Round Label on clients (Set to 0) and leaderboard
+        broadcastMessage(Message.createRoundUpdateMessage(0));
+        for (int i = 1; i <= MAX_CLIENTS; i++) {
+            if (sockServer[i] != null && sockServer[i].alive) {
+                sockServer[i].sendData(Message.createScoreMessage(0));
+            }
+        }
+        broadcastMessage(Message.createLeaderboardMessage(""));
+
+        // 4. Re-enable the "Start Game" button for the leader
+        synchronized(this) {
+            if (leaderID != -1 && sockServer[leaderID] != null) {
+                sockServer[leaderID].sendData(Message.createLeaderMessage());
+                displayMessage(leaderID, "You can start a new game now.\n");
+            }
+        }
     }
 
     /**
@@ -551,6 +612,7 @@ public class ServerController {
                     // IMPORTANT: Use the new validation method. This sets the word and handles drawer rotation.
                     if (gameLogic.validateAndSetWord(chosenWord)) {
                         // Start Phase 3 ONLY if the chosen word was valid
+                        broadcastMessage(Message.createClearMessage());
                         startPhase3_RoundStart();
                     } else {
                         displayMessage(myConID, "ERROR: Invalid word selection received.\n");
