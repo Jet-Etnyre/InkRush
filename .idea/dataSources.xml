@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="pictionaryDB" uuid="07d1b29e-57e9-46f5-8d63-7f90299bc4ac">
+    <data-source source="LOCAL" name="pictionaryDB" uuid="d9e5308e-3590-4e84-8eaa-78f69566be9b">
       <driver-ref>h2.unified</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.h2.Driver</jdbc-driver>
