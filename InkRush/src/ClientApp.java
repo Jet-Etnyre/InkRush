@@ -22,18 +22,21 @@ public class ClientApp extends Application {
      * Starts the JavaFX application and displays the Lobby window.
      */
     @Override
-    public void start(Stage stage) throws Exception {
-        // Load the Lobby FXML
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("Lobby.fxml"));
-        Parent root = loader.load();
+    public void start(Stage stage) {
+        try {
+            // Wrap the loading code to catch the hidden error
+            Parent root = FXMLLoader.load(getClass().getResource("Lobby.fxml"));
 
-        // We don't need to get the controller here anymore because
-        // ClientApp doesn't need to manage the Lobby's internal logic.
+            Scene scene = new Scene(root);
+            stage.setTitle("InkRush Client");
+            stage.setScene(scene);
+            stage.show();
 
-        Scene scene = new Scene(root);
-        stage.setTitle("InkRush - Lobby");
-        stage.setScene(scene);
-        stage.show();
+        } catch (Exception e) {
+            // This will print the ACTUAL error to your console
+            System.out.println("CRITICAL ERROR DURING STARTUP:");
+            e.printStackTrace();
+        }
     }
 
     /**
