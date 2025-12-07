@@ -37,18 +37,19 @@ public class GameLogic {
     private int guessCount;
 
     // word bank
-    // TODO: change this later, not the final implementation
-     private String[] wordBank = {
-        "elephant", "guitar", "pizza", "rainbow", "rocket",
-        "butterfly", "mountain", "computer", "dragon", "sunset",
-        "penguin", "castle", "bicycle", "treasure", "lightning"
-    };
+    private WordBank wordBank;
+
+    // Temporarily holds the 3 word choices for the drawer
+    private String[] currentWordOptions;
 
     /**
      * Creates a new GameLogic instance.
      * Initializes player tracking and game state.
+     * @param wordBank the initialized WordBank instance for fetching words
      */
-    public GameLogic() {
+    public GameLogic(WordBank wordBank) {
+        this.wordBank = wordBank;
+
         players = new HashMap<>();
         playerOrder = new ArrayList<>();
         correctGuessers = new ArrayList<>();
@@ -80,38 +81,60 @@ public class GameLogic {
 
     /**
      * Starts a new round with the next drawer.
-     * Selects a random word and starts the timer.
-     * Automatically rotates through all players as drawers.
-     * @return the drawer's client ID or -1 if not enough players
+     * Selects 3 word options and starts the timer.
+     * @return a String array containing {DrawerID, WordOption1, WordOption2, WordOption3}
+     * or null if not enough players.
      */
-    public int startNewRound() {
+    public String[] startNewRound() {
         if (playerOrder.isEmpty()) {
-            return -1;
+            return null; // Return null if not enough players (changed from -1)
         }
-        // select next drawer (rotates through all players)
+
+        // 1. Select the next drawer
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
-        // select random word
-        currentWord = selectRandomWord();
+        // 2. Get the three word choices from the database
+        // This is where WordBank's logic is utilized
+        currentWordOptions = getThreeRandomWords();
 
-        // start timer
+        // 3. Start timer and round state
         roundStartTime = System.currentTimeMillis();
         roundActive = true;
 
-        // reset guess tracking for new round
+        // 4. Reset guess tracking for new round
         correctGuessers.clear();
         guessCount = 0;
 
-        return currentDrawerID;
+        // 5. Package and return the necessary information for the server
+        String[] roundInfo = new String[4];
+        roundInfo[0] = String.valueOf(currentDrawerID);
+        System.arraycopy(currentWordOptions, 0, roundInfo, 1, 3);
+
+        // Example return: {"4", "Giraffe", "Hammer", "Running"}
+        return roundInfo;
     }
 
     /**
-     * Selects a random word from the word bank.
-     * @return randomly selected word
+     * Validates that the chosen word is one of the available options and sets it as the current word.
+     * @param word the word chosen by the drawer
+     * @return true if the word was valid and set, false otherwise.
      */
-    private String selectRandomWord() {
-        int index = random.nextInt(wordBank.length);
-        return wordBank[index];
+    public boolean validateAndSetWord(String word) {
+        if (currentWordOptions == null || currentWordOptions.length == 0) {
+            return false;
+        }
+
+        // Check if the chosen word is actually one of the three options offered
+        for (String option : currentWordOptions) {
+            if (option.equalsIgnoreCase(word.trim())) {
+                this.currentWord = word.trim(); // Set the final word
+                this.currentWordOptions = null; // Clear options
+                // Advance drawer index for the NEXT round (this is correct placement)
+                currentDrawerIndex = (currentDrawerIndex + 1) % playerOrder.size();
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -246,21 +269,16 @@ public class GameLogic {
     }
 
     /**
-     * Pulls 3 unique words form the word bank
+     * Pulls 3 unique words from the WordBank (database) based on
+     * the game's logic (3 random categories, 1 word from each).
      * @return String[] containing 3 words
      */
     public String[] getThreeRandomWords() {
-        // Safety check if bank is small
-        if (wordBank.length < 3) return new String[]{"Cat", "Dog", "Bird"};
+        // Delegate word fetching to the WordBank
+        List<String> chosenList = wordBank.getThreeWords();
 
-        List<String> chosen = new ArrayList<>();
-        while (chosen.size() < 3) {
-            String w = wordBank[random.nextInt(wordBank.length)];
-            if (!chosen.contains(w)) {
-                chosen.add(w);
-            }
-        }
-        return chosen.toArray(new String[0]);
+        // Convert List back to String array
+        return chosenList.toArray(new String[0]);
     }
 
     /**
