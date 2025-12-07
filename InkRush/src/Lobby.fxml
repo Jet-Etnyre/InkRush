@@ -61,7 +61,7 @@
             </Button>
         </VBox>
 
-        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" spacing="5.0" StackPane.alignment="TOP_RIGHT">
+        <VBox alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" spacing="5.0" StackPane.alignment="TOP_RIGHT">
             <Label text="Draw Avatar">
                 <font>
                     <Font name="System Bold Italic" size="16.0" />
@@ -71,6 +71,12 @@
             <StackPane style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #2F4F4F; -fx-border-width: 3; -fx-border-radius: 8; -fx-padding: 2;">
                 <Canvas fx:id="avatarCanvas" height="120.0" width="120.0" />
             </StackPane>
+
+            <Button fx:id="clearAvatarButton" onAction="#onClearAvatarClicked" alignment="CENTER" contentDisplay="TOP" prefHeight="36.0" prefWidth="86.0" text="Clear" textAlignment="CENTER">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Button>
         </VBox>
 
     </StackPane>

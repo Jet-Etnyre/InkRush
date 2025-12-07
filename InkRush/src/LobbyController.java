@@ -86,6 +86,18 @@ public class LobbyController {
     }
 
     /**
+     * Clears the avatar canvas when the Clear button is clicked.
+     */
+    @FXML
+    public void onClearAvatarClicked() {
+        if (avatarCanvas != null) {
+            GraphicsContext gc = avatarCanvas.getGraphicsContext2D();
+            // Clear the entire 120x120 area
+            gc.clearRect(0, 0, avatarCanvas.getWidth(), avatarCanvas.getHeight());
+        }
+    }
+
+    /**
      * Handles the "Join Game" button click.
      * Validates input, loads the game screen, passes connection info, and switches scenes.
      */
