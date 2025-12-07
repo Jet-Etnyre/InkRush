@@ -176,10 +176,28 @@ public class CanvasController {
             sizeValueLabel.setText("Brush: " + (int) currentBrushSize + "px");
         }
 
+        if (startGame != null) {
+            startGame.setDisable(true);
+            startGame.setOnAction(e -> onStartGameClicked());
+        }
+
+        if (WordOption1 != null) {
+            WordOption1.setVisible(false);
+            WordOption2.setVisible(false);
+            WordOption3.setVisible(false);
+        }
+
         setupDrawing();
 
         //start the animation loop
         startSmoothDrawingLoop();
+    }
+
+    private void onStartGameClicked() {
+        if (connected) {
+            sendToServer(Message.createStartGameMessage());
+            startGame.setDisable(true);
+        }
     }
 
     /**
@@ -541,15 +559,20 @@ public class CanvasController {
             int clientID = message.parseConnectedMessage();
             displayMessage("You are Client " + clientID + "\n");
 
-        }else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
+        } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
             canDraw = true;
             Platform.runLater(() -> {
+                // Reset label while they choose a word
+                if (wordToGuessLabel != null) {
+                    wordToGuessLabel.setText("Choose a word...");
+                }
                 if (wordLabel != null) {
                     wordLabel.setText("YOU ARE DRAWING!");
                 }
                 drawingCanvas.setStyle("-fx-cursor: crosshair;");
             });
             displayMessage("*** YOU ARE THE DRAWER! ***\n");
+
         } else if (messageType.equals(Message.CHAT)) {
             // Chat message format: CHAT:username:message
             Message.ChatData chatData = message.parseChatMessage();
@@ -558,10 +581,63 @@ public class CanvasController {
             displayMessage(user + ": " + chatMessage + "\n");
 
         } else if (messageType.equals(Message.DRAW)) {
-            // TODO: Handle drawing messages
-            // Format: DRAW:x,y,color,size
             Message.DrawData drawData = message.parseDrawMessage();
             drawRemotePoint(drawData);
+
+        } else if (messageType.equals(Message.WORD_OPTIONS)) {
+            String[] words = message.getMessageContents().split(",");
+
+            Platform.runLater(() -> {
+                // Enable and Label Button 1
+                WordOption1.setText(words[0]);
+                WordOption1.setVisible(true);
+                WordOption1.setDisable(false);
+                WordOption1.setOnAction(e -> sendWordSelection(words[0]));
+
+                // Enable and Label Button 2
+                WordOption2.setText(words[1]);
+                WordOption2.setVisible(true);
+                WordOption2.setDisable(false);
+                WordOption2.setOnAction(e -> sendWordSelection(words[1]));
+
+                // Enable and Label Button 3
+                WordOption3.setText(words[2]);
+                WordOption3.setVisible(true);
+                WordOption3.setDisable(false);
+                WordOption3.setOnAction(e -> sendWordSelection(words[2]));
+
+                displayMessage("Choose a word to draw!\n");
+            });
+        } else if (messageType.equals(Message.ROUND_START)) {
+            // 1. Parse the message
+            Message.RoundStartData data = message.parseRoundStartMessage();
+            String textToDisplay = data.getWord(); // Will be "APPLE" or "_ _ _ _ _"
+            int duration = data.getDuration();
+
+            // 2. Update the GUI
+            Platform.runLater(() -> {
+                if (wordToGuessLabel != null) {
+                    // Check if we are the drawer to style it differently (optional)
+                    if (canDraw) {
+                        wordToGuessLabel.setText(textToDisplay);
+                    } else {
+                        wordToGuessLabel.setText(textToDisplay);
+                    }
+                }
+
+                if (timerLabel != null) {
+                    timerLabel.setText(String.valueOf(duration));
+                    // You can add a Timer task here to count down locally
+                }
+            });
+
+        } else if (messageType.equals(Message.LEADER)) {
+            Platform.runLater(() -> {
+                if (startGame != null) {
+                    startGame.setDisable(false);
+                    displayMessage("*** You are the Lobby Leader! ***\n");
+                }
+            });
 
         } else if (messageType.equals(Message.CLEAR)) {
             //Clear canvas when receiving clear from server
@@ -577,6 +653,14 @@ public class CanvasController {
         }
     }
 
+    private void sendWordSelection(String word) {
+        sendToServer(Message.createWordSelectedMessage(word));
+
+        // Hide buttons immediately after choosing
+        WordOption1.setVisible(false);
+        WordOption2.setVisible(false);
+        WordOption3.setVisible(false);
+    }
 
     /**
      * Sends a chat message to the server.
