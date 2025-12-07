@@ -3,7 +3,9 @@ import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
@@ -18,7 +20,6 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
@@ -48,6 +49,11 @@ public class CanvasController {
     @FXML private Label nameLabel; // Matches teammate's file
     @FXML private Label wordLabel;
 
+    // NEW FXML controls (must match your FXML fx:id names)
+    @FXML private ColorPicker colorPicker;
+    @FXML private Slider sizeSlider;
+    @FXML private Label sizeValueLabel;
+
     //Use dynamic IP logic
     private static final int SERVER_PORT = 23596;
     private String serverIP = "localhost"; // Default, overwritten by Lobby
@@ -67,9 +73,9 @@ public class CanvasController {
     private boolean remoteFirstPoint = true;
     private volatile boolean canDraw = false;
 
-    // Hardcoded brush styles for now
-    private static final double BRUSH_SIZE = 4.0;
-    private static final String BRUSH_COLOR = "#000000";
+    // Dynamic brush state (replaces hardcoded constants)
+    private Color currentColor = Color.BLACK;
+    private double currentBrushSize = 4.0;
 
     /**
      * Sets the connection information (Name and IP) from the Lobby.
@@ -91,12 +97,53 @@ public class CanvasController {
 
     /**
      * Initializes the controller after FXML is loaded.
-     * Sets up event handlers for drawing.
+     * Sets up event handlers for drawing and UI controls.
      */
     @FXML
     public void initialize() {
         executor = Executors.newFixedThreadPool(1);
+
+        // Initialize color + size UI state (if controls are present)
+        if (colorPicker != null) {
+            colorPicker.setValue(currentColor);
+            colorPicker.setOnAction(e -> changeColor());
+        }
+
+        if (sizeSlider != null) {
+            sizeSlider.setMin(1);
+            sizeSlider.setMax(20);
+            sizeSlider.setValue(currentBrushSize);
+            sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> changeBrushSize());
+        }
+
+        if (sizeValueLabel != null) {
+            sizeValueLabel.setText("Brush: " + (int) currentBrushSize + "px");
+        }
+
         setupDrawing();
+    }
+
+    /**
+     * Called when colorPicker changes.
+     */
+    @FXML
+    private void changeColor() {
+        if (colorPicker != null) {
+            currentColor = colorPicker.getValue();
+        }
+    }
+
+    /**
+     * Called when sizeSlider changes.
+     */
+    @FXML
+    private void changeBrushSize() {
+        if (sizeSlider != null) {
+            currentBrushSize = sizeSlider.getValue();
+            if (sizeValueLabel != null) {
+                sizeValueLabel.setText("Brush: " + (int) currentBrushSize + "px");
+            }
+        }
     }
 
     /**
@@ -104,8 +151,8 @@ public class CanvasController {
      */
     private void setupDrawing() {
         var gc = drawingCanvas.getGraphicsContext2D();
-        gc.setLineWidth(BRUSH_SIZE);
-        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(currentBrushSize);
+        gc.setStroke(currentColor);
 
         // When mouse is pressed
         drawingCanvas.setOnMousePressed(event -> {
@@ -114,6 +161,10 @@ public class CanvasController {
             }
             lastX = event.getX();
             lastY = event.getY();
+
+            // Ensure GC uses current brush when starting
+            gc.setLineWidth(currentBrushSize);
+            gc.setStroke(currentColor);
         });
 
         // When mouse is dragged so moving while clicking
@@ -124,10 +175,20 @@ public class CanvasController {
             double x = event.getX();
             double y = event.getY();
 
+            // Use dynamic brush values
+            gc.setLineWidth(currentBrushSize);
+            gc.setStroke(currentColor);
+
             gc.strokeLine(lastX, lastY, x, y);
 
             if(connected) {
-                Message drawMessage = Message.createDrawMessage(lastX, lastY, BRUSH_COLOR, BRUSH_SIZE);
+                // send hex color + size to server
+                Message drawMessage = Message.createDrawMessage(
+                        lastX,
+                        lastY,
+                        colorToHex(currentColor),
+                        currentBrushSize
+                );
                 sendToServer(drawMessage);
             }
 
@@ -148,9 +209,6 @@ public class CanvasController {
 
     /**
      * Clears the drawing canvas and resets the drawing related state.
-     * This method will remove all graphics from the canvas, and resets local and
-     * remote coordinate tracking, and notifies the server to clear the
-     * canvas for all connected players if the client is connected.
      */
     @FXML
     private void clearCanvas() {
@@ -159,24 +217,30 @@ public class CanvasController {
             return;
         }
 
-        // Get graphics context and clear the entire canvas
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
-        // Reset drawing tracking variables
         lastX = 0;
         lastY = 0;
-        remoteFirstPoint = true;   // So next remote drawing starts fresh
+        remoteFirstPoint = true;
         remoteLastX = 0;
         remoteLastY = 0;
 
-        // If connected, tell server to clear canvas for all players
         if (connected) {
             Message clearMessage = Message.createClearMessage(); // Make sure your Message class has this
             sendToServer(clearMessage);
         }
     }
 
+    /**
+     * Converts a JavaFX Color to #RRGGBB hex string.
+     */
+    private String colorToHex(Color c) {
+        int r = (int) Math.round(c.getRed() * 255);
+        int g = (int) Math.round(c.getGreen() * 255);
+        int b = (int) Math.round(c.getBlue() * 255);
+        return String.format("#%02X%02X%02X", r, g, b);
+    }
 
     /**
      * Connects to the server and starts listening for messages.
@@ -190,22 +254,14 @@ public class CanvasController {
                 try {
                     displayMessage("Attempting connection to " + serverIP + "...\n");
 
-                    // Create an unconnected socket
                     connection = new Socket();
-
-                    // 1. CONNECTION TIMEOUT (3s): Fails if Server is down/unreachable
                     connection.connect(new InetSocketAddress(serverIP, SERVER_PORT), 3000);
-
-                    // 2. READ TIMEOUT (2s): Fixes the "Hanging" issue if server is full
                     connection.setSoTimeout(2000);
 
                     output = new ObjectOutputStream(connection.getOutputStream());
                     output.flush();
 
-                    // This throws SocketTimeoutException if server accepts but ignores us (Full)
                     input = new ObjectInputStream(connection.getInputStream());
-
-                    // 3. RESET TIMEOUT: Once connected, we wait forever for messages
                     connection.setSoTimeout(0);
 
                     connected = true;
@@ -221,10 +277,7 @@ public class CanvasController {
                     displayMessage("Please check the IP address format.\n");
 
                 } catch (SocketTimeoutException e) {
-                    // 1. Clean up the internal socket first
                     closeSocketOnError();
-
-                    // 2. Show the popup and close the window
                     closeWindowOnError(
                             "Connection Timed Out",
                             "The server did not respond in time (3s).\n" +
@@ -253,7 +306,7 @@ public class CanvasController {
                 connection.close();
             }
         } catch (IOException e) {
-            // Ignored because we are already handling an error
+            // Ignored
         }
     }
 
@@ -265,22 +318,20 @@ public class CanvasController {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                // 1. Create a popup Alert
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Connection Error");
                 alert.setHeaderText(header);
                 alert.setContentText(content);
 
-                // 2. Wait for the user to click "OK"
                 alert.showAndWait();
 
-                // 3. Get the current window (Stage) and close it
+                // Gets the current window (Stage) and close it
                 if (chatTextArea.getScene() != null) {
                     Stage stage = (Stage) chatTextArea.getScene().getWindow();
                     stage.close();
                 }
 
-                // 4. Ensure background threads are killed
+                // Makes sure background threads are killed
                 disconnect();
             }
         });
@@ -299,7 +350,6 @@ public class CanvasController {
 
                 // Handle different message types
                 handleServerMessage(message);
-
             } catch (IOException ioException) {
                 if (connected) {
                     displayMessage("Lost connection to server\n");
@@ -358,7 +408,6 @@ public class CanvasController {
             displayMessage("[Canvas cleared]\n");
 
         } else {
-            // Unknown message type - just display it
             displayMessage("[SERVER] " + message.toString() + "\n");
         }
     }
@@ -372,7 +421,6 @@ public class CanvasController {
         Platform.runLater(() -> {
             GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
-            // Parse color
             Color color = Color.web(drawData.getColor());
             gc.setStroke(color);
             gc.setLineWidth(drawData.getSize());
@@ -390,7 +438,7 @@ public class CanvasController {
                 gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
                         drawData.getSize(), drawData.getSize());
                 remoteFirstPoint = false;
-            }else{
+            } else {
                 gc.strokeLine(remoteLastX, remoteLastY, x, y);
             }
 
