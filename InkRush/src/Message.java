@@ -18,6 +18,7 @@ public class Message implements Serializable {
     public static final String ROUND_START = "ROUND_START";
     public static final String ROUND_END = "ROUND_END";
     public static final String TERMINATE = "TERMINATE";
+    public static final String DRAWER_ASSIGNED = "DRAWER_ASSIGNED";
 
     private String messageType;
     private String messageContents;
