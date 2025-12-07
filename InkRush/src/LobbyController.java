@@ -8,6 +8,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 import javafx.scene.media.AudioClip; // Import for sound effects
 import javafx.scene.media.Media;     // Import for music
 import javafx.scene.media.MediaPlayer; // Import for music player
@@ -33,6 +38,14 @@ public class LobbyController {
     @FXML
     private ListView<String> playersListView;
 
+    @FXML
+    // Matches the fx:id in your FXML
+    private Canvas avatarCanvas;
+
+    // Tracking for drawing
+    private double lastX;
+    private double lastY;
+
     /**
      * Initializes the controller class.
      * Sets default values and prepares the UI.
@@ -46,6 +59,30 @@ public class LobbyController {
 
         // Ensure button is enabled so users can attempt to join
         joinButton.setDisable(false);
+
+        // Setup the drawing logic
+        setupAvatarDrawing();
+    }
+
+    private void setupAvatarDrawing() {
+        GraphicsContext gc = avatarCanvas.getGraphicsContext2D();
+        gc.setLineWidth(3);
+        gc.setStroke(Color.BLACK);
+        gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+
+        // Draw a dot on click
+        avatarCanvas.setOnMousePressed(e -> {
+            lastX = e.getX();
+            lastY = e.getY();
+            gc.strokeOval(lastX, lastY, 1, 1);
+        });
+
+        // Draw a line on drag
+        avatarCanvas.setOnMouseDragged(e -> {
+            gc.strokeLine(lastX, lastY, e.getX(), e.getY());
+            lastX = e.getX();
+            lastY = e.getY();
+        });
     }
 
     /**
@@ -58,7 +95,7 @@ public class LobbyController {
             String username = playerNameField.getText().trim();
             String serverIP = ipAddressField.getText().trim();
 
-            // 1. Basic Validation
+            // Basic Validation
             if (username.isEmpty()) {
                 System.out.println("Please enter a name!");
                 return;
@@ -68,14 +105,15 @@ public class LobbyController {
                 return;
             }
 
+            // Take a snapshot of whatever the user drew
+            WritableImage avatarImage = avatarCanvas.snapshot(null, null);
             // 2. Load the Game (Canvas) FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Canvas.fxml"));
             Parent gameRoot = loader.load();
 
             // 3. Get the controller and pass the Connection Info
             CanvasController gameController = loader.getController();
-            gameController.setConnectionInfo(username, serverIP);
-
+            gameController.setConnectionInfo(username, serverIP, avatarImage);
             // 4. Switch the Scene
             Stage stage = (Stage) joinButton.getScene().getWindow();
 

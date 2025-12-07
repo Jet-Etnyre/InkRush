@@ -102,7 +102,17 @@
                 <Canvas fx:id="drawingCanvas" height="300" width="500" />
             </StackPane>
 
-            <VBox alignment="CENTER" spacing="15">
+            <VBox alignment="CENTER" spacing="10">
+
+                <Label text="Your Avatar" textFill="#662dcc">
+                    <font>
+                        <Font name="System Bold Italic" size="14.0" />
+                    </font>
+                </Label>
+
+                <StackPane style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #2F4F4F; -fx-border-width: 3; -fx-border-radius: 8; -fx-padding: 2;">
+                    <Canvas fx:id="avatarCanvas" height="80.0" width="80.0" />
+                </StackPane>
 
                 <Button fx:id="clearButton" onAction="#clearCanvas" prefHeight="35.0" prefWidth="121.0" style="-fx-background-color: #FFFFFF;" text="Clear">
                     <font><Font name="Goudy Stout" size="16.0" /></font>

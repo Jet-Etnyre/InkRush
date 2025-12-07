@@ -29,6 +29,7 @@ import javafx.application.Platform;
 import javafx.animation.AnimationTimer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javafx.scene.image.Image;
 
 /**
  * Controller for the InkRush game client.
@@ -85,6 +86,8 @@ public class CanvasController {
     @FXML private Label leaderboardSpot3;
     @FXML private Label leaderboardSpot4;
     @FXML private Label leaderboardSpot5;
+    @FXML
+    private Canvas avatarCanvas;
 
     //Use dynamic IP logic
     private static final int SERVER_PORT = 23596;
@@ -145,12 +148,23 @@ public class CanvasController {
      * @param name The player's username
      * @param ip   The IP address to connect to
      */
-    public void setConnectionInfo(String name, String ip) {
+    public void setConnectionInfo(String name, String ip, Image avatar) {
         this.username = name;
         this.serverIP = ip;
 
         if (nameLabel != null) {
             nameLabel.setText(name);
+        }
+
+        // Handle the Avatar
+        if (avatarCanvas != null && avatar != null) {
+            GraphicsContext gc = avatarCanvas.getGraphicsContext2D();
+
+            // Clear the canvas make it white/transparent first
+            gc.clearRect(0, 0, avatarCanvas.getWidth(), avatarCanvas.getHeight());
+
+            // Draw the image passed from the Lobby
+            gc.drawImage(avatar, 0, 0, avatarCanvas.getWidth(), avatarCanvas.getHeight());
         }
 
         // Start the connection attempt now that we have the IP
