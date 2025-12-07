@@ -238,7 +238,7 @@ public class CanvasController {
 
     /**
      * Shows an error popup and then force-closes the application window.
-     * Uses Platform.runLater with an anonymous inner class (no lambda).
+     * Uses Platform.runLater with an anonymous inner class.
      */
     private void closeWindowOnError(final String header, final String content) {
         Platform.runLater(new Runnable() {
