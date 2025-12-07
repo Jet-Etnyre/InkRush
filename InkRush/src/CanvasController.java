@@ -274,15 +274,19 @@ public class CanvasController {
         double dy = target.getY() - currentAnimY;
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        // If very close, snap to it
+        // If close enough, DRAW THE LAST PIECE and snap
         if (distance < 1.0) {
+            gc.setStroke(Color.web(target.getColor()));
+            gc.setLineWidth(target.getSize());
+            gc.strokeLine(currentAnimX, currentAnimY, target.getX(), target.getY());
+
             currentAnimX = target.getX();
             currentAnimY = target.getY();
             pointQueue.poll();
             return;
         }
 
-        // If huge jump (pen lift), snap instantly
+        // Handle pen lifts (Large jumps)
         if (distance > 100) {
             currentAnimX = target.getX();
             currentAnimY = target.getY();
@@ -291,9 +295,19 @@ public class CanvasController {
             return;
         }
 
-        // MOVE SMOOTHLY towards the target
-        double moveX = currentAnimX + (dx * SMOOTHING_SPEED);
-        double moveY = currentAnimY + (dy * SMOOTHING_SPEED);
+
+        // If the queue is backing up (> 2 points), go full speed (1.0) to catch up.
+        // If the queue is manageable, use the smooth speed (0.5).
+        double actualSpeed;
+        if (pointQueue.size() > 2) {
+            actualSpeed = 1.0;
+        } else {
+            actualSpeed = SMOOTHING_SPEED;
+        }
+
+        // Move towards target
+        double moveX = currentAnimX + (dx * actualSpeed);
+        double moveY = currentAnimY + (dy * actualSpeed);
 
         gc.setStroke(Color.web(target.getColor()));
         gc.setLineWidth(target.getSize());
