@@ -13,6 +13,13 @@ import javafx.scene.control.TextArea;
 import javafx.application.Platform;
 import org.w3c.dom.Text;
 
+//Import for timer creation
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
+
 /**
  * Controller for InkRush game Server.
  * Manages up to 5 client connections with dedicated display areas for each client to show incoming game states.
@@ -50,6 +57,7 @@ public class ServerController {
     private volatile int currentDrawerID = -1;
     private volatile int leaderID = -1; // track who is the leader
     private boolean gameStarted = false; // track game state
+    private Timeline gameLoop;
 
     /**
      * Initialize the controller after FXML is loaded.
@@ -223,6 +231,8 @@ public class ServerController {
      * Begins phase 2 of the game flow: selecting the drawer and having them choose a word
      */
     private void startPhase2_WordSelection() {
+        broadcastMessage(Message.createClearMessage());
+
         //rotate to next player as drawer
         currentDrawerID = gameLogic.startNewRound();
 
@@ -250,6 +260,8 @@ public class ServerController {
         String word = gameLogic.getCurrentWord();
         String hint = gameLogic.getWordHint();
 
+        gameLogic.resetTimer();
+
         // 1. Send the ACTUAL WORD to the Drawer
         // format: ROUND_START:apple:60
         if (sockServer[currentDrawerID] != null) {
@@ -264,6 +276,92 @@ public class ServerController {
 
         // 3. Log to Server GUI
         displayMessageToAll("[Phase 3] Round Started! Word: " + word + "\n");
+
+        //4 Start Game Loop (Check time every 1 second)
+        startGameLoopMonitor();
+    }
+
+    /**
+     * Monitors the game state every 1 second using JavaFX Timeline.
+     * Checks for time expiration or if everyone has guessed.
+     */
+    private void startGameLoopMonitor() {
+        // Stop any existing loop to be safe
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
+
+        // Create a loop that runs every 1 second
+        gameLoop = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+
+            // Check 1: Is Time Up?
+            if (gameLogic.isTimeUp()) {
+                endRoundAndRotate("Time is up!");
+                return;
+            }
+
+            // Check 2: Did everyone (except drawer) guess?
+            // only check this if there are at least 2 players
+            if (gameLogic.getPlayerCount() > 1 &&
+                    gameLogic.getGuessCount() >= gameLogic.getPlayerCount() - 1) {
+
+                endRoundAndRotate("Everyone guessed correctly!");
+            }
+        }));
+
+        gameLoop.setCycleCount(Animation.INDEFINITE);
+        gameLoop.play();
+    }
+
+    /**
+     * Ends the round, shows scores, and schedules the next drawer.
+     */
+    private void endRoundAndRotate(String reason) {
+        if (!gameLogic.isRoundActive()) return;
+
+        // 1. Stop the loop
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
+
+        // 2. Logic Cleanup
+        String currentWord = gameLogic.getCurrentWord();
+        gameLogic.endRound();
+
+        // 3. Notify Clients
+        displayMessageToAll("[Server] Round Over: " + reason + "\n");
+
+        // Send Chat Notification
+        Message endMsg = Message.createChatMessage("SERVER", reason + " Word was: " + currentWord);
+        broadcastMessage(endMsg);
+
+        // Send Leaderboard Update
+        broadcastLeaderboard();
+
+        // 4. Intermission: Wait 5 seconds, then go back to Phase 2
+        PauseTransition intermission = new PauseTransition(Duration.seconds(5));
+        intermission.setOnFinished(event -> {
+            startPhase2_WordSelection();
+        });
+        intermission.play();
+    }
+
+    /**
+     * formatting the leaderboard data and broadcasting it.
+     */
+    private void broadcastLeaderboard() {
+        // Get sorted list from GameLogic
+        var leaders = gameLogic.getLeaderboard();
+
+        // Build string: "Name1,Score1,Name2,Score2..."
+        StringBuilder sb = new StringBuilder();
+        for (var p : leaders) {
+            if (sb.length() > 0) sb.append(",");
+            sb.append(p.getUsername()).append(",").append(p.getScore());
+        }
+
+        // Send using LEADERBOARD message type
+        broadcastMessage(Message.createLeaderboardMessage(sb.toString()));
     }
 
     /* This new Inner Class implements Runnable and objects instantiated from this
@@ -432,10 +530,11 @@ public class ServerController {
                 if (myConID != currentDrawerID) return;
 
                 String chosenWord = message.getMessageContents();
-                gameLogic.setCurrentWord(chosenWord);
 
-                // Trigger Phase 3
-                startPhase3_RoundStart();
+                Platform.runLater(()->{
+                    gameLogic.setCurrentWord(chosenWord);
+                    startPhase3_RoundStart();
+                });
             } else if (messageType.equals(Message.GUESS)) {
                 Message.GuessData guessData = message.parseGuessMessage();
                 String username = guessData.getUsername();
@@ -468,12 +567,10 @@ public class ServerController {
                             username + " guessed the word!");
                     broadcastExcept(toOthers, myConID);
 
-                    if (gameLogic.getGuessCount() >= gameLogic.getPlayerCount() - 1) {
-                        Message endMsg = Message.createChatMessage("SYSTEM",
-                                "Everyone guessed! Word was: " + gameLogic.getCurrentWord());
-                        broadcastMessage(endMsg);
+                    broadcastLeaderboard();
 
-                        gameLogic.endRound();
+                    if (gameLogic.getGuessCount() >= gameLogic.getPlayerCount() - 1) {
+                        Platform.runLater(() -> endRoundAndRotate("Everyone guessed correctly!"));
                     }
                 } else {
                     Message wrongGuess = Message.createChatMessage(username, guess);
@@ -510,6 +607,8 @@ public class ServerController {
          */
         private void closeConnection() {
             displayMessage(myConID, "\nTerminating connection " + myConID + "\n");
+
+            gameLogic.removePlayer(myConID);
 
             // mark this thread as dead immediately so the leader search loop skips it
             alive = false;

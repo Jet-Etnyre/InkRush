@@ -105,6 +105,10 @@ public class CanvasController {
     private Color currentColor = Color.BLACK;
     private double currentBrushSize = 4.0;
 
+    //Used for round timer
+    private AnimationTimer roundTimer;
+    private long timerEndTime;
+
     // Animation Queue: Stores points to be drawn smoothly
     // Wrapper class to track if a point is the start of a new stroke
     private static class PointRequest {
@@ -560,8 +564,9 @@ public class CanvasController {
             displayMessage("You are Client " + clientID + "\n");
 
         } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
-            canDraw = true;
             Platform.runLater(() -> {
+                timerLabel.setText("0");
+
                 // Reset label while they choose a word
                 if (wordToGuessLabel != null) {
                     wordToGuessLabel.setText("Choose a word...");
@@ -616,21 +621,33 @@ public class CanvasController {
 
             // 2. Update the GUI
             Platform.runLater(() -> {
-                if (wordToGuessLabel != null) {
-                    // Check if we are the drawer to style it differently (optional)
-                    if (canDraw) {
-                        wordToGuessLabel.setText(textToDisplay);
-                    } else {
+                // 2. Logic to Lock/Unlock based on what we received
+                if (textToDisplay.contains("_")) {
+                    // Guesser
+                    canDraw = false;
+                    if (wordToGuessLabel != null){
                         wordToGuessLabel.setText(textToDisplay);
                     }
+                    drawingCanvas.setStyle("-fx-cursor: default;");
+                } else {
+                    // Drawer
+                    canDraw = true;
+                    if (wordToGuessLabel != null){
+                        wordToGuessLabel.setText(textToDisplay);
+                    }
+                    drawingCanvas.setStyle("-fx-cursor: crosshair;");
                 }
 
-                if (timerLabel != null) {
-                    timerLabel.setText(String.valueOf(duration));
-                    // You can add a Timer task here to count down locally
-                }
+                startRoundTimer(duration);
             });
 
+        } else if (messageType.equals(Message.LEADERBOARD)) {
+            // Format: "Name1,Score1,Name2,Score2..."
+            String[] parts = message.getMessageContents().split(",");
+
+            Platform.runLater(() -> {
+                updateLeaderboardLabels(parts);
+            });
         } else if (messageType.equals(Message.LEADER)) {
             Platform.runLater(() -> {
                 if (startGame != null) {
@@ -651,6 +668,61 @@ public class CanvasController {
         } else {
             displayMessage("[SERVER] " + message.toString() + "\n");
         }
+    }
+
+    /**
+     * Updates the 5 leaderboard labels on the sidebar.
+     */
+    private void updateLeaderboardLabels(String[] data) {
+        Label[] labels = {leaderboardSpot1, leaderboardSpot2, leaderboardSpot3, leaderboardSpot4, leaderboardSpot5};
+
+        // Clear all first
+        for (Label l : labels) {
+            if (l != null) l.setText("");
+        }
+
+        // Fill in available data
+        int labelIndex = 0;
+        for (int i = 0; i < data.length - 1; i += 2) {
+            if (labelIndex >= labels.length) break;
+
+            String name = data[i];
+            String score = data[i+1];
+
+            if (labels[labelIndex] != null) {
+                labels[labelIndex].setText((labelIndex + 1) + ". " + name + " - " + score);
+            }
+            labelIndex++;
+        }
+    }
+
+    /**
+     * Starts a visual countdown for the client.
+     */
+    private void startRoundTimer(int seconds) {
+        // Stop old timer if running
+        if (roundTimer != null) roundTimer.stop();
+
+        timerEndTime = System.currentTimeMillis() + (seconds * 1000);
+
+        roundTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                long remaining = timerEndTime - System.currentTimeMillis();
+                int secondsLeft = (int) Math.ceil(remaining / 1000.0);
+
+                if (secondsLeft < 0) secondsLeft = 0;
+
+                if (timerLabel != null) {
+                    timerLabel.setText(String.valueOf(secondsLeft));
+                }
+
+                if (secondsLeft <= 0) {
+                    stop();
+                }
+            }
+        };
+        roundTimer.start();
     }
 
     private void sendWordSelection(String word) {
