@@ -665,7 +665,17 @@ public class CanvasController {
             });
             displayMessage("[Canvas cleared]\n");
 
-        } else {
+        }
+        else if (messageType.equals(Message.SCORE)) {
+            int newScore = message.parseScoreMessage();
+
+            Platform.runLater(() -> {
+                if (scoreLabel != null) {
+                    scoreLabel.setText("" + newScore);
+                }
+            });
+        }
+        else {
             displayMessage("[SERVER] " + message.toString() + "\n");
         }
     }
