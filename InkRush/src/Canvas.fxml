@@ -2,7 +2,9 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -10,135 +12,131 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
 <VBox prefHeight="677.0" prefWidth="720.0" spacing="10" style="-fx-background-color: #7af09a;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
-   <GridPane prefHeight="81.0" prefWidth="720.0">
-     <columnConstraints>
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-     </columnConstraints>
-     <rowConstraints>
-       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-     </rowConstraints>
-      <children>
-         <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
-            <children>
-                  <Label prefHeight="27.0" prefWidth="159.0" text="Player Name:" underline="true">
-                  <font>
-                     <Font name="System Bold" size="18.0" />
-                  </font>
-               </Label>
-               <Label fx:id="nameLabel" text="Label">
-                  <font>
-                     <Font size="14.0" />
-                  </font>
-               </Label>
-            </children>
-         </HBox>
-         <HBox alignment="TOP_RIGHT" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1">
-            <children>
-               <Label alignment="CENTER" prefHeight="40.0" prefWidth="90.0" text="Score:" underline="true">
-                  <font>
-                     <Font name="System Bold" size="18.0" />
-                  </font>
-               </Label>
-               <Label fx:id="scoreLabel" alignment="CENTER" prefHeight="40.0" prefWidth="70.0" text="Label" />
-            </children>
-         </HBox>
-      </children>
-   </GridPane>
-   <GridPane prefHeight="26.0" prefWidth="720.0">
-     <columnConstraints>
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-     </columnConstraints>
-     <rowConstraints>
-       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-     </rowConstraints>
-      <children>
-         <HBox prefHeight="54.0" prefWidth="720.0">
-            <children>
-            
-                <Label prefHeight="55.0" prefWidth="165.0" text="Word to Draw">
-                  <font>
-                     <Font name="System Bold" size="18.0" />
-                  </font>
-               </Label>
-               <Label fx:id="wordToGuessLabel" prefHeight="56.0" prefWidth="245.0" text="Label" />
-            </children>
-         </HBox>
-      </children>
-   </GridPane>
-   <HBox prefHeight="100.0" prefWidth="200.0">
-      <children>
-      
-          <Canvas fx:id="drawingCanvas" height="300" width="500" />
-         <VBox alignment="CENTER" prefHeight="300.0" prefWidth="222.0">
-            <children>
-                <Button fx:id="clearButton" alignment="CENTER" prefHeight="51.0" prefWidth="84.0" text="Clear" textAlignment="CENTER" onAction="#clearCanvas">
-                <font>
-                     <Font name="System Bold" size="18.0" />
-                  </font>
-               </Button>
-            </children>
-         </VBox>
-      </children>
-   </HBox>
-   <GridPane prefHeight="295.0" prefWidth="720.0">
-     <columnConstraints>
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-     </columnConstraints>
-     <rowConstraints>
-         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-       <RowConstraints minHeight="10.0" prefHeight="180.0" vgrow="SOMETIMES" />
-     </rowConstraints>
-      <children>
-         <TextArea fx:id="chatTextArea" editable="false" prefHeight="147.0" prefWidth="360.0" GridPane.rowIndex="1" />
-      
-                <HBox alignment="CENTER" prefHeight="58.0" prefWidth="360.0" spacing="10">
-              <children>
-               <TextField fx:id="chatTextInput" onAction="#sendServerChat" promptText="Enter Chats Here" />
-               <Button fx:id="chatButton" mnemonicParsing="false" onAction="#sendServerChat" text="Chat" />
-              </children>
-          </HBox>
-         <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" />
-         <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-            <children>
-               <Label fx:id="leaderboardLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="55.0" prefWidth="165.0" text="Leaderboard" textAlignment="CENTER" underline="true">
-                  <font>
-                     <Font name="System Bold" size="18.0" />
-                  </font>
-               </Label>
-               <Label fx:id="leaderboardSpot1" text="1.">
-                  <font>
-                     <Font size="24.0" />
-                  </font>
-               </Label>
-               <Label fx:id="leaderboardSpot2" text="2.">
-                  <font>
-                     <Font size="24.0" />
-                  </font>
-               </Label>
-               <Label fx:id="leaderboardSpot3" text="3.">
-                  <font>
-                     <Font size="24.0" />
-                  </font>
-               </Label>
-               <Label fx:id="leaderboardSpot4" text="4.">
-                  <font>
-                     <Font size="24.0" />
-                  </font>
-               </Label>
-               <Label fx:id="leaderboardSpot5" text="5.">
-                  <font>
-                     <Font size="24.0" />
-                  </font>
-               </Label>
-            </children>
-         </VBox>
-      </children>
-   </GridPane>
+
+    <GridPane prefHeight="81.0" prefWidth="720.0">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+        </columnConstraints>
+
+        <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+        </rowConstraints>
+
+        <children>
+            <HBox alignment="CENTER_LEFT">
+                <children>
+                    <Label prefWidth="159.0" text="Player Name:" underline="true">
+                        <font><Font name="System Bold" size="18.0"/></font>
+                    </Label>
+                    <Label fx:id="nameLabel">
+                        <font><Font size="14.0"/></font>
+                    </Label>
+                </children>
+            </HBox>
+
+            <HBox alignment="TOP_RIGHT" GridPane.columnIndex="1">
+                <children>
+                    <Label text="Score:" underline="true">
+                        <font><Font name="System Bold" size="18.0"/></font>
+                    </Label>
+                    <Label fx:id="scoreLabel"/>
+                </children>
+            </HBox>
+        </children>
+    </GridPane>
+
+    <GridPane prefHeight="26.0" prefWidth="720.0">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" />
+            <ColumnConstraints hgrow="SOMETIMES" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints />
+        </rowConstraints>
+
+        <children>
+            <HBox>
+                <children>
+                    <Label text="Word to Draw">
+                        <font><Font name="System Bold" size="18.0"/></font>
+                    </Label>
+                    <Label fx:id="wordToGuessLabel"/>
+                </children>
+            </HBox>
+        </children>
+    </GridPane>
+
+    <HBox spacing="15">
+        <children>
+
+            <StackPane style="-fx-border-color: #2F4F4F; -fx-border-width: 5; -fx-border-radius: 8; -fx-padding: 5;">
+                <Canvas fx:id="drawingCanvas" height="300" width="500"/>
+            </StackPane>
+
+            <VBox alignment="CENTER" spacing="15">
+
+                <Button fx:id="clearButton" text="Clear" onAction="#clearCanvas" prefWidth="100">
+                    <font><Font name="System Bold" size="18.0"/></font>
+                </Button>
+
+                <HBox spacing="10" alignment="CENTER">
+                    <Label text="Color:"/>
+                    <ColorPicker fx:id="colorPicker"/>
+                </HBox>
+
+                <HBox spacing="10" alignment="CENTER">
+                    <Label text="Size:"/>
+                    <Slider fx:id="sizeSlider" min="1" max="20" value="4" prefWidth="120"/>
+                </HBox>
+
+                <Label fx:id="sizeValueLabel" text="Brush: 4px"/>
+            </VBox>
+        </children>
+    </HBox>
+
+    <GridPane prefHeight="295.0">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES"/>
+            <ColumnConstraints hgrow="SOMETIMES"/>
+        </columnConstraints>
+
+        <rowConstraints>
+            <RowConstraints/>
+            <RowConstraints/>
+        </rowConstraints>
+
+        <children>
+
+            <TextArea fx:id="chatTextArea" editable="false"
+                      prefHeight="147.0" prefWidth="360.0"
+                      GridPane.rowIndex="1"/>
+
+            <HBox spacing="10">
+                <children>
+                    <TextField fx:id="chatTextInput" onAction="#sendServerChat" promptText="Enter Chats Here"/>
+                    <Button fx:id="chatButton" onAction="#sendServerChat" text="Chat"/>
+                </children>
+            </HBox>
+
+            <VBox alignment="CENTER" spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                <children>
+                    <Label text="Leaderboard" underline="true">
+                        <font><Font name="System Bold" size="18.0"/></font>
+                    </Label>
+                    <Label fx:id="leaderboardSpot1" text="1."/>
+                    <Label fx:id="leaderboardSpot2" text="2."/>
+                    <Label fx:id="leaderboardSpot3" text="3."/>
+                    <Label fx:id="leaderboardSpot4" text="4."/>
+                    <Label fx:id="leaderboardSpot5" text="5."/>
+                </children>
+            </VBox>
+
+        </children>
+    </GridPane>
 
 </VBox>

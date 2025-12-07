@@ -19,16 +19,21 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
+import javafx.scene.control.Alert;
+import javafx.stage.Stage;
+import javafx.application.Platform;
+
 /**
  * Controller for the InkRush game client.
  * Handles user input, server communication, and GUI updates.
- * <p>
+ *
  * NETWORK COMMUNICATION:
  * - Connects to server on initialization using dynamic IP from Lobby
  * - Sends messages via ObjectOutputStream
  * - Receives messages via background thread with ObjectInputStream
  * - All GUI updates use Platform.runLater() for thread safety
- * <p>
+ *
  * ERROR HANDLING:
  * - Implements graceful failure for connection timeouts (e.g., Server Full).
  * - Handles UnknownHostException for invalid IP addresses.
@@ -67,6 +72,7 @@ public class CanvasController {
     private double remoteLastX;
     private double remoteLastY;
     private boolean remoteFirstPoint = true;
+    private volatile boolean canDraw = false;
 
     // Hardcoded brush styles for now
     private static final double BRUSH_SIZE = 4.0;
@@ -111,12 +117,18 @@ public class CanvasController {
 
         // When mouse is pressed
         drawingCanvas.setOnMousePressed(event -> {
+            if(!canDraw) {
+                return;
+            }
             lastX = event.getX();
             lastY = event.getY();
         });
 
         // When mouse is dragged so moving while clicking
         drawingCanvas.setOnMouseDragged(event -> {
+            if(!canDraw) {
+                return;
+            }
             double x = event.getX();
             double y = event.getY();
 
@@ -133,14 +145,28 @@ public class CanvasController {
 
         drawingCanvas.setOnMouseReleased(event -> {
             // Reset remote drawing tracking when local drawing stops
-            if (connected) {
+            if(!canDraw) {
+                return;
+            }
+            if(connected) {
                 remoteFirstPoint = false;
             }
         });
     }
 
+    /**
+     * Clears the drawing canvas and resets the drawing related state.
+     * This method will remove all graphics from the canvas, and resets local and
+     * remote coordinate tracking, and notifies the server to clear the
+     * canvas for all connected players if the client is connected.
+     */
     @FXML
     private void clearCanvas() {
+        if(!canDraw) {
+            displayMessage("Only the drawer can clear the canvas!\n");
+            return;
+        }
+
         // Get graphics context and clear the entire canvas
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
@@ -158,6 +184,7 @@ public class CanvasController {
             sendToServer(clearMessage);
         }
     }
+
 
     /**
      * Connects to the server and starts listening for messages.
@@ -206,11 +233,15 @@ public class CanvasController {
                     displayMessage("Please check the IP address format.\n");
 
                 } catch (SocketTimeoutException e) {
-                    // CATCH TIMEOUT EXPLICITLY
+                    // 1. Clean up the internal socket first
                     closeSocketOnError();
-                    displayMessage("\n[ERROR] Connection Timed Out!\n");
-                    displayMessage("The server did not respond.\n");
-                    displayMessage("Likely cause: SERVER FULL or High Latency.\n");
+
+                    // 2. Show the popup and close the window
+                    closeWindowOnError(
+                            "Connection Timed Out",
+                            "The server did not respond in time (3s).\n" +
+                                    "Likely cause: The Server is FULL or not running."
+                    );
 
                 } catch (IOException e) {
                     // Catch other IO errors (like Connection Refused)
@@ -239,9 +270,37 @@ public class CanvasController {
     }
 
     /**
+     * Shows an error popup and then force-closes the application window.
+     * Uses Platform.runLater with an anonymous inner class.
+     */
+    private void closeWindowOnError(final String header, final String content) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                // 1. Create a popup Alert
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Connection Error");
+                alert.setHeaderText(header);
+                alert.setContentText(content);
+
+                // 2. Wait for the user to click "OK"
+                alert.showAndWait();
+
+                // 3. Get the current window (Stage) and close it
+                if (chatTextArea.getScene() != null) {
+                    Stage stage = (Stage) chatTextArea.getScene().getWindow();
+                    stage.close();
+                }
+
+                // 4. Ensure background threads are killed
+                disconnect();
+            }
+        });
+    }
+    /**
      * Continuously listens for messages from the server.
      * Runs in background thread - blocks at readObject() waiting for messages.
-     * <p>
+     *
      * All message types to be handled are in Message
      */
     private void processServerMessages() {
@@ -279,6 +338,15 @@ public class CanvasController {
             int clientID = message.parseConnectedMessage();
             displayMessage("You are Client " + clientID + "\n");
 
+        }else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
+            canDraw = true;
+            Platform.runLater(() -> {
+                if (wordLabel != null) {
+                    wordLabel.setText("YOU ARE DRAWING!");
+                }
+                drawingCanvas.setStyle("-fx-cursor: crosshair;");
+            });
+            displayMessage("*** YOU ARE THE DRAWER! ***\n");
         } else if (messageType.equals(Message.CHAT)) {
             // Chat message format: CHAT:username:message
             Message.ChatData chatData = message.parseChatMessage();
@@ -303,14 +371,13 @@ public class CanvasController {
 
         } else {
             // Unknown message type - just display it
-            displayMessage("[SERVER] " + message + "\n");
+            displayMessage("[SERVER] " + message.toString() + "\n");
         }
     }
 
     /**
      * Draws a point received from another client
      * Thread safe, uses platform.runlater() for gui updates
-     *
      * @param drawData DrawData Message containing coordinates color, size
      */
     private void drawRemotePoint(Message.DrawData drawData) {
