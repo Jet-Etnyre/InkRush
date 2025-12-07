@@ -391,7 +391,7 @@ Clothes:Tie
 Clothes:Tights
 Clothes:Top
 Clothes:Trousers
-Clothes:T-shirt
+Clothes:T shirt
 Clothes:Underwear
 Clothes:Uniform
 Clothes:Vest
