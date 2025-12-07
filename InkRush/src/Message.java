@@ -19,6 +19,8 @@ public class Message implements Serializable {
     public static final String ROUND_END = "ROUND_END";
     public static final String TERMINATE = "TERMINATE";
     public static final String DRAWER_ASSIGNED = "DRAWER_ASSIGNED";
+    public static final String START_GAME = "START_GAME";
+    public static final String LEADER = "LEADER";
 
     public static final String USERNAME = "USERNAME";
 
@@ -27,7 +29,8 @@ public class Message implements Serializable {
 
     /**
      * Creates a new message with type and contents.
-     * @param messageType the type of message
+     *
+     * @param messageType     the type of message
      * @param messageContents the contents of the message
      */
     public Message(String messageType, String messageContents) {
@@ -38,6 +41,7 @@ public class Message implements Serializable {
     /**
      * Creates a message from a formatted string.
      * Parses "TYPE:contents" format.
+     *
      * @param formattedMessage the formatted message string
      * @return parsed Message object
      */
@@ -59,6 +63,7 @@ public class Message implements Serializable {
 
     /**
      * Converts message to formatted string for transmission.
+     *
      * @return formatted string "TYPE:contents"
      */
     @Override
@@ -71,6 +76,7 @@ public class Message implements Serializable {
 
     /**
      * Gets the message type.
+     *
      * @return the message type
      */
     public String getMessageType() {
@@ -79,6 +85,7 @@ public class Message implements Serializable {
 
     /**
      * Gets the raw message contents.
+     *
      * @return the message contents
      */
     public String getMessageContents() {
@@ -88,6 +95,7 @@ public class Message implements Serializable {
     /**
      * Parses a DRAW message and returns the drawing data.
      * Format: "DRAW:x,y,color,size"
+     *
      * @return DrawData object containing parsed drawing information
      */
     public DrawData parseDrawMessage() {
@@ -115,6 +123,7 @@ public class Message implements Serializable {
     /**
      * Parses a GUESS message and returns the guess data.
      * Format: "GUESS:username:word"
+     *
      * @return GuessData object containing parsed guess information
      */
     public GuessData parseGuessMessage() {
@@ -136,6 +145,7 @@ public class Message implements Serializable {
     /**
      * Parses a CHAT message and returns the chat data.
      * Format: "CHAT:username:message"
+     *
      * @return ChatData object containing parsed chat information
      */
     public ChatData parseChatMessage() {
@@ -157,6 +167,7 @@ public class Message implements Serializable {
     /**
      * Parses a CONNECTED message and returns the client ID.
      * Format: "CONNECTED:clientID"
+     *
      * @return the client ID
      */
     public int parseConnectedMessage() {
@@ -174,6 +185,7 @@ public class Message implements Serializable {
     /**
      * Parses a ROUND_START message and returns round data.
      * Format: "ROUND_START:word:duration"
+     *
      * @return RoundStartData object containing parsed round information
      */
     public RoundStartData parseRoundStartMessage() {
@@ -194,6 +206,7 @@ public class Message implements Serializable {
 
     /**
      * Creates a CONNECTED message.
+     *
      * @param clientID the client ID
      * @return Message object
      */
@@ -203,7 +216,8 @@ public class Message implements Serializable {
 
     /**
      * Creates a CHAT message.
-     * @param username the username
+     *
+     * @param username    the username
      * @param chatMessage the chat message
      * @return Message object
      */
@@ -213,10 +227,11 @@ public class Message implements Serializable {
 
     /**
      * Creates a DRAW message.
-     * @param x the x coordinate
-     * @param y the y coordinate
+     *
+     * @param x     the x coordinate
+     * @param y     the y coordinate
      * @param color the color
-     * @param size the brush size
+     * @param size  the brush size
      * @return Message object
      */
     public static Message createDrawMessage(double x, double y, String color, double size) {
@@ -225,8 +240,9 @@ public class Message implements Serializable {
 
     /**
      * Creates a GUESS message.
+     *
      * @param username the username
-     * @param guess the guessed word
+     * @param guess    the guessed word
      * @return Message object
      */
     public static Message createGuessMessage(String username, String guess) {
@@ -235,6 +251,7 @@ public class Message implements Serializable {
 
     /**
      * Creates a CLEAR message.
+     *
      * @return Message object
      */
     public static Message createClearMessage() {
@@ -243,7 +260,8 @@ public class Message implements Serializable {
 
     /**
      * Creates a ROUND_START message.
-     * @param word the word to draw
+     *
+     * @param word     the word to draw
      * @param duration the round duration in seconds
      * @return Message object
      */
@@ -253,6 +271,7 @@ public class Message implements Serializable {
 
     /**
      * Creates a TERMINATE message.
+     *
      * @return Message object
      */
     public static Message createTerminateMessage() {
@@ -261,19 +280,35 @@ public class Message implements Serializable {
 
     /**
      * Creates a DRAWER_ASSIGNED message.
+     *
      * @return Message object
      */
-    public static Message createDrawerAssignedMessage(){
+    public static Message createDrawerAssignedMessage() {
         return new Message(DRAWER_ASSIGNED, "");
     }
 
     /**
      * Creates a USERNAME message.
+     *
      * @param username the username
      * @return Message object
      */
     public static Message createUsernameMessage(String username) {
         return new Message(USERNAME, username);
+    }
+
+    /**
+     * Creates a LEADER message
+     */
+    public static Message createLeaderMessage() {
+        return new Message(LEADER, "");
+    }
+
+    /**
+     * Creates a new START_GAME message
+     */
+    public static Message createStartGameMessage() {
+        return new Message(START_GAME, "");
     }
 
     /**

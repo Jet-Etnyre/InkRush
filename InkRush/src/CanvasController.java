@@ -176,10 +176,22 @@ public class CanvasController {
             sizeValueLabel.setText("Brush: " + (int) currentBrushSize + "px");
         }
 
+        if (startGame != null) {
+            startGame.setDisable(true);
+            startGame.setOnAction(e -> onStartGameClicked());
+        }
+
         setupDrawing();
 
         //start the animation loop
         startSmoothDrawingLoop();
+    }
+
+    private void onStartGameClicked() {
+        if (connected) {
+            sendToServer(Message.createStartGameMessage());
+            startGame.setDisable(false);
+        }
     }
 
     /**
@@ -541,7 +553,7 @@ public class CanvasController {
             int clientID = message.parseConnectedMessage();
             displayMessage("You are Client " + clientID + "\n");
 
-        }else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
+        } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
             canDraw = true;
             Platform.runLater(() -> {
                 if (wordLabel != null) {
@@ -550,6 +562,7 @@ public class CanvasController {
                 drawingCanvas.setStyle("-fx-cursor: crosshair;");
             });
             displayMessage("*** YOU ARE THE DRAWER! ***\n");
+
         } else if (messageType.equals(Message.CHAT)) {
             // Chat message format: CHAT:username:message
             Message.ChatData chatData = message.parseChatMessage();
@@ -562,6 +575,14 @@ public class CanvasController {
             // Format: DRAW:x,y,color,size
             Message.DrawData drawData = message.parseDrawMessage();
             drawRemotePoint(drawData);
+
+        } else if (messageType.equals(Message.LEADER)) {
+            Platform.runLater(() -> {
+                if (startGame != null) {
+                    startGame.setDisable(false);
+                    displayMessage("*** You are the Lobby Leader! ***\n");
+                }
+            });
 
         } else if (messageType.equals(Message.CLEAR)) {
             //Clear canvas when receiving clear from server

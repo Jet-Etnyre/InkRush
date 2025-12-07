@@ -17,7 +17,7 @@ import org.w3c.dom.Text;
  * Controller for InkRush game Server.
  * Manages up to 5 client connections with dedicated display areas for each client to show incoming game states.
  * Uses executor service for multithreaded client handling with JavaFX Task patter.
- *
+ * <p>
  * All GUI update are handled through the JavaFX Application Thread. The sockservers are threads for each client, performing tasks
  * and communicating back with the JFXAT to update the server GUI
  */
@@ -47,7 +47,9 @@ public class ServerController {
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
     private GameLogic gameLogic;
-    private volatile int currentDrawerID = -1;
+    private final int currentDrawerID = -1;
+    private volatile int leaderID = -1; // track who is the leader
+    private boolean gameStarted = false; // track game state
 
     /**
      * Initialize the controller after FXML is loaded.
@@ -98,8 +100,7 @@ public class ServerController {
                                 nClientsActive++;
 
                                 if (currentDrawerID == -1) {
-                                    currentDrawerID = counter;
-                                    displayMessageToAll("[Server] Client " + counter + " is now the DRAWER\n");
+                                    leaderID = counter;
                                 }
                             }
 
@@ -218,6 +219,10 @@ public class ServerController {
         });
     }
 
+    private void startPhase2_WordSelection() {
+        startNewRound();
+    }
+
     /* This new Inner Class implements Runnable and objects instantiated from this
      * class will become server threads each serving a different client
      */
@@ -317,10 +322,12 @@ public class ServerController {
         private void processConnection() throws IOException {
             //Send CONNECTED Message to client
             sendData(Message.createConnectedMessage(myConID));
-            if (myConID == currentDrawerID) {
-                sendData(Message.createDrawerAssignedMessage());
+            synchronized (ServerController.this) {
+                if (myConID == leaderID) {
+                    sendData(Message.createLeaderMessage());
+                    displayMessage(myConID, "Client " + myConID + " assigned as leader");
+                }
             }
-            displayMessage(myConID, "Client " + myConID + " is ready to play \n");
 
             while (alive) {
                 try {
@@ -367,6 +374,14 @@ public class ServerController {
                 }
                 displayMessage(myConID, "Broadcasting drawing point\n");
                 broadcastExcept(message, myConID);
+
+            } else if (messageType.equals(Message.START_GAME)) {
+                if (myConID == leaderID) {
+                    displayMessageToAll("[Server] Leader started the game!\n");
+                    gameStarted = true;
+
+                    startPhase2_WordSelection();
+                }
             } else if (messageType.equals(Message.GUESS)) {
                 Message.GuessData guessData = message.parseGuessMessage();
                 String username = guessData.getUsername();
@@ -436,46 +451,75 @@ public class ServerController {
             }
         }
 
-            /**
-             * Closes connection and cleans up resources
-             */
-            private void closeConnection () {
-                displayMessage(myConID, "\nTerminating connection " + myConID + "\n");
-                displayMessage(myConID, "\nNumber of connections = " + nClientsActive + "\n");
-                alive = false;
+        /**
+         * Closes connection and cleans up resources
+         */
+        private void closeConnection() {
+            displayMessage(myConID, "\nTerminating connection " + myConID + "\n");
 
-                try {
-                    if (output != null) {
-                        output.close();
+            // mark this thread as dead immediately so the leader search loop skips it
+            alive = false;
+
+            // new leader assignment logic
+            synchronized (ServerController.this) {
+                if (myConID == leaderID) {
+                    leaderID = -1;
+
+                    if (nClientsActive > 0) {
+                        displayMessageToAll("[Server] Leader disconnected. Looking for new leader...\n");
+
+                        // finds the next available active client
+                        for (int i = 1; i <= MAX_CLIENTS; i++) {
+                            if (sockServer[i] != null && sockServer[i].alive && i != myConID) {
+                                leaderID = i; // finds the new leader
+
+                                // notifies the new leader
+                                sockServer[i].sendData(Message.createLeaderMessage());
+                                displayMessageToAll("[Server] Client " + i + " is the new Leader\n");
+                                break;
+                            }
+                        }
+                    } else {
+                        // no players left
+                        displayMessageToAll("[Server] No players remaining. Resetting leader.\n");
                     }
-                    if (input != null) {
-                        input.close();
-                    }
-                    if (connection != null) {
-                        connection.close();
-                    }
-                } catch (IOException e) {
-                    displayMessage(myConID, "Error closing connection " + e.getMessage() + "\n");
                 }
             }
 
-            /**
-             * Sends data to this specific client.
-             * Synchronized to prevent concurrent write conflicts
-             *
-             * @param message String message to be sent
-             */
-            private void sendData (Message message){
-                try // send object to client
-                {
-                    synchronized (output) {
-                        output.writeObject(message);
-                        output.flush();
-                    }
-                    displayMessage(myConID, "SENT: " + message.toString() + "\n");
-                } catch (IOException ioException) {
-                    displayMessage(myConID, "ERROR sending: " + ioException.getMessage() + "\n");
+            displayMessage(myConID, "\nNumber of connections = " + nClientsActive + "\n");
+
+            try {
+                if (output != null) {
+                    output.close();
                 }
+                if (input != null) {
+                    input.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (IOException e) {
+                displayMessage(myConID, "Error closing connection " + e.getMessage() + "\n");
+            }
+        }
+
+        /**
+         * Sends data to this specific client.
+         * Synchronized to prevent concurrent write conflicts
+         *
+         * @param message String message to be sent
+         */
+        private void sendData(Message message) {
+            try // send object to client
+            {
+                synchronized (output) {
+                    output.writeObject(message);
+                    output.flush();
+                }
+                displayMessage(myConID, "SENT: " + message.toString() + "\n");
+            } catch (IOException ioException) {
+                displayMessage(myConID, "ERROR sending: " + ioException.getMessage() + "\n");
             }
         }
     }
+}
