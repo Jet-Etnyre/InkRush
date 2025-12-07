@@ -19,8 +19,8 @@
 
     <GridPane prefHeight="81.0" prefWidth="720.0">
         <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="479.0" minWidth="10.0" prefWidth="479.0" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="329.66668701171875" minWidth="10.0" prefWidth="241.0" />
         </columnConstraints>
 
         <rowConstraints>
@@ -29,16 +29,16 @@
 
         <children>
 
-            <HBox alignment="CENTER_LEFT" prefHeight="42.0" prefWidth="424.0">
+            <HBox alignment="CENTER_LEFT" prefHeight="42.0" prefWidth="437.0">
                 <children>
                     <Label prefHeight="27.0" prefWidth="143.0" text="Player Name:" underline="true">
                         <font>
                             <Font name="System Bold" size="18.0" />
                         </font>
                     </Label>
-                    <Label fx:id="nameLabel" prefHeight="20.0" prefWidth="177.0">
+                    <Label fx:id="nameLabel" contentDisplay="CENTER" prefHeight="20.0" prefWidth="177.0" textAlignment="CENTER" textFill="DARKORANGE">
                         <font>
-                            <Font size="14.0" />
+                            <Font name="System Bold" size="16.0" />
                         </font>
                     </Label>
                     <Button fx:id="startGame" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="40.0" prefWidth="153.0" text="StartGame" textAlignment="CENTER">
@@ -46,6 +46,7 @@
                             <Font name="System Bold" size="18.0" />
                         </font>
                     </Button>
+                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="53.0" prefWidth="111.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="DARKORANGE" />
                 </children>
             </HBox>
 
