@@ -31,9 +31,9 @@
 
             <HBox alignment="CENTER_LEFT" prefHeight="42.0" prefWidth="437.0">
                 <children>
-                    <Label prefHeight="27.0" prefWidth="143.0" text="Player Name:" underline="true">
+                    <Label prefHeight="27.0" prefWidth="298.0" text="Player Name:" textFill="#722b2b" underline="true">
                         <font>
-                            <Font name="System Bold" size="18.0" />
+                            <Font name="Goudy Stout" size="14.0" />
                         </font>
                     </Label>
                     <Label fx:id="nameLabel" contentDisplay="CENTER" prefHeight="20.0" prefWidth="177.0" textAlignment="CENTER" textFill="DARKORANGE">
@@ -41,19 +41,21 @@
                             <Font name="System Bold" size="16.0" />
                         </font>
                     </Label>
-                    <Button fx:id="startGame" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="40.0" prefWidth="153.0" text="StartGame" textAlignment="CENTER">
+                    <Button fx:id="startGame" alignment="TOP_CENTER" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="40.0" prefWidth="187.0" text="Start Game" textAlignment="CENTER" wrapText="true">
                         <font>
-                            <Font name="System Bold" size="18.0" />
+                            <Font name="Goudy Stout" size="12.0" />
                         </font>
                     </Button>
-                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="53.0" prefWidth="111.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="#090909" />
+                    <Label fx:id="timerLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="42.0" prefWidth="128.0" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="00:00" textAlignment="CENTER" textFill="#090909" />
                 </children>
             </HBox>
 
             <HBox alignment="TOP_RIGHT" GridPane.columnIndex="1">
                 <children>
-                    <Label alignment="TOP_LEFT" prefHeight="27.0" prefWidth="63.0" text="Score:" underline="true">
-                        <font><Font name="System Bold" size="18.0" /></font>
+                    <Label alignment="TOP_LEFT" prefHeight="25.0" prefWidth="101.0" text="Score:" underline="true">
+                        <font>
+                            <Font name="Goudy Stout" size="16.0" />
+                        </font>
                     </Label>
                     <Label fx:id="scoreLabel" prefHeight="17.0" prefWidth="127.0" />
                 </children>
@@ -84,15 +86,14 @@
 
     <HBox spacing="15">
         <children>
-
             <StackPane style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #2F4F4F; -fx-border-width: 5; -fx-border-radius: 8; -fx-padding: 5;">
                 <Canvas fx:id="drawingCanvas" height="300" width="500" />
             </StackPane>
 
             <VBox alignment="CENTER" spacing="15">
 
-                <Button fx:id="clearButton" onAction="#clearCanvas" prefWidth="100" text="Clear">
-                    <font><Font name="System Bold" size="18.0" /></font>
+                <Button fx:id="clearButton" onAction="#clearCanvas" prefHeight="35.0" prefWidth="121.0" text="Clear">
+                    <font><Font name="Goudy Stout" size="16.0" /></font>
                 </Button>
 
                 <HBox alignment="CENTER" spacing="10">
@@ -130,21 +131,21 @@
                     <TextField fx:id="chatTextInput" onAction="#sendServerChat" promptText="Enter Chats Here" />
                     <Button fx:id="chatButton" onAction="#sendServerChat" text="Chat">
                         <font>
-                            <Font name="System Bold" size="12.0" />
+                            <Font name="Ravie" size="12.0" />
                         </font></Button>
                     <Button fx:id="WordOption1" mnemonicParsing="false" text="Option 1">
                         <font>
-                            <Font name="System Bold" size="12.0" />
+                            <Font name="Ravie" size="12.0" />
                         </font>
                     </Button>
                     <Button fx:id="WordOption2" mnemonicParsing="false" text="Option 2">
                         <font>
-                            <Font name="System Bold" size="12.0" />
+                            <Font name="Ravie" size="12.0" />
                         </font>
                     </Button>
                     <Button fx:id="WordOption3" mnemonicParsing="false" text="Option 3">
                         <font>
-                            <Font name="System Bold" size="12.0" />
+                            <Font name="Ravie" size="12.0" />
                         </font>
                     </Button>
                 </children>
