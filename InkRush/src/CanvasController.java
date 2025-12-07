@@ -580,7 +580,7 @@ public class CanvasController {
 
         } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
             Platform.runLater(() -> {
-                timerLabel.setText("0");
+                timerLabel.setText("60");
 
                 // Reset label while they choose a word
                 if (wordToGuessLabel != null) {
@@ -680,7 +680,7 @@ public class CanvasController {
                     wordLabel.setText("");
                 }
                 if (timerLabel != null) {
-                    timerLabel.setText("0");
+                    timerLabel.setText("60");
                 }
             });
         } else if (messageType.equals(Message.LEADERBOARD)) {
