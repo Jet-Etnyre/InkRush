@@ -28,7 +28,7 @@
         </rowConstraints>
 
         <children>
-            <HBox alignment="CENTER_LEFT">
+            <HBox alignment="CENTER_LEFT" prefHeight="42.0" prefWidth="389.0">
                 <children>
                     <Label prefWidth="159.0" text="Player Name:" underline="true">
                         <font><Font name="System Bold" size="18.0" /></font>
@@ -36,6 +36,11 @@
                     <Label fx:id="nameLabel">
                         <font><Font size="14.0" /></font>
                     </Label>
+               <Button fx:id="startGame" prefHeight="44.0" prefWidth="215.0" text="StartGame">
+                  <font>
+                     <Font name="System Bold" size="18.0" />
+                  </font>
+               </Button>
                 </children>
             </HBox>
 
