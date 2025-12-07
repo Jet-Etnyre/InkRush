@@ -275,8 +275,9 @@ public class GameLogic {
     }
 
     /**
-     * Gets a hint for the current word (underscores with length)
-     * @return hint string with word length
+     * Gets a hint for the current word.
+     * Letters become "_ " and spaces become "   " (triple space) to visually separate words.
+     * @return hint string
      */
     public String getWordHint() {
         if (currentWord == null) {
@@ -285,7 +286,16 @@ public class GameLogic {
 
         StringBuilder hint = new StringBuilder();
         for (int i = 0; i < currentWord.length(); i++) {
-            hint.append("_ ");
+            char c = currentWord.charAt(i);
+
+            if (c == ' ') {
+                // If the character is a space, add a wide gap (3 spaces)
+                // This makes "alarm clock" look like "_ _ _ _ _   _ _ _ _ _"
+                hint.append("   ");
+            } else {
+                // If it is a letter, add an underscore and a space
+                hint.append("_ ");
+            }
         }
         return hint.toString().trim();
     }
