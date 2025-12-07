@@ -19,6 +19,8 @@ public class Message implements Serializable {
     public static final String ROUND_END = "ROUND_END";
     public static final String TERMINATE = "TERMINATE";
 
+    public static final String USERNAME = "USERNAME";
+
     private String messageType;
     private String messageContents;
 
@@ -254,6 +256,15 @@ public class Message implements Serializable {
      */
     public static Message createTerminateMessage() {
         return new Message(TERMINATE, "");
+    }
+
+    /**
+     * Creates a USERNAME message.
+     * @param username the username
+     * @return Message object
+     */
+    public static Message createUsernameMessage(String username) {
+        return new Message(USERNAME, username);
     }
 
     /**

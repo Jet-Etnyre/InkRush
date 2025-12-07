@@ -116,6 +116,27 @@ public class ServerController {
     }
 
     /**
+     * Starts a new round of the game.
+     */
+    private void startNewRound() {
+        int drawerID = gameLogic.startNewRound();
+        String word = gameLogic.getCurrentWord();
+        String hint = gameLogic.getWordHint();
+
+        displayMessageToAll("[Server] Round starting! Client " + drawerID + " is drawing\n");
+
+        Message drawerMsg = Message.createRoundStartMessage(word, 60);
+        sockServer[drawerID].sendData(drawerMsg);
+
+        for (int i = 1; i <= MAX_CLIENTS; i++) {
+            if (i != drawerID && sockServer[i] != null && sockServer[i].alive) {
+                Message guesserMsg = Message.createRoundStartMessage(hint, 60);
+                sockServer[i].sendData(guesserMsg);
+            }
+        }
+    }
+
+    /**
      * Broadcasts message only to drawer and players who already guessed.
      *
      * @param message Message to broadcast
@@ -319,6 +340,7 @@ public class ServerController {
          * Handles different type of game messages.
          * Routes messages accordingly based on type.
          * Message Protocol handled by Message class
+         *
          * @param message String message to handle
          */
         private void handleGameMessage(Message message) {
@@ -378,6 +400,15 @@ public class ServerController {
             } else if (messageType.equals(Message.CLEAR)) {
                 displayMessage(myConID, "Broadcasting canvas clear\n");
                 broadcastMessage(message);
+
+            } else if (messageType.equals(Message.USERNAME)) {
+                String username = message.getMessageContents();
+                gameLogic.addPlayer(myConID, username);
+                displayMessage(myConID, "Player registered: " + username + "\n");
+
+                if (gameLogic.getPlayerCount() >= 2) {
+                    startNewRound();
+                }
             } else {
                 displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
             }

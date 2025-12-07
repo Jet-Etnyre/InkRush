@@ -22,26 +22,33 @@ import java.util.concurrent.Executors;
 /**
  * Controller for the InkRush game client.
  * Handles user input, server communication, and GUI updates.
- *
+ * <p>
  * NETWORK COMMUNICATION:
  * - Connects to server on initialization using dynamic IP from Lobby
  * - Sends messages via ObjectOutputStream
  * - Receives messages via background thread with ObjectInputStream
  * - All GUI updates use Platform.runLater() for thread safety
- *
+ * <p>
  * ERROR HANDLING:
  * - Implements graceful failure for connection timeouts (e.g., Server Full).
  * - Handles UnknownHostException for invalid IP addresses.
  */
 public class CanvasController {
-    @FXML private Button chatButton;
-    @FXML private TextArea chatTextArea;
-    @FXML private TextField chatTextInput;
-    @FXML private Button clearButton;
-    @FXML private Canvas drawingCanvas;
+    @FXML
+    private Button chatButton;
+    @FXML
+    private TextArea chatTextArea;
+    @FXML
+    private TextField chatTextInput;
+    @FXML
+    private Button clearButton;
+    @FXML
+    private Canvas drawingCanvas;
 
-    @FXML private Label nameLabel; // Matches teammate's file
-    @FXML private Label wordLabel;
+    @FXML
+    private Label nameLabel; // Matches teammate's file
+    @FXML
+    private Label wordLabel;
 
     //Use dynamic IP logic
     private static final int SERVER_PORT = 23596;
@@ -68,8 +75,9 @@ public class CanvasController {
     /**
      * Sets the connection information (Name and IP) from the Lobby.
      * Automatically triggers the connection attempt.
+     *
      * @param name The player's username
-     * @param ip The IP address to connect to
+     * @param ip   The IP address to connect to
      */
     public void setConnectionInfo(String name, String ip) {
         this.username = name;
@@ -114,7 +122,7 @@ public class CanvasController {
 
             gc.strokeLine(lastX, lastY, x, y);
 
-            if(connected) {
+            if (connected) {
                 Message drawMessage = Message.createDrawMessage(lastX, lastY, BRUSH_COLOR, BRUSH_SIZE);
                 sendToServer(drawMessage);
             }
@@ -125,7 +133,7 @@ public class CanvasController {
 
         drawingCanvas.setOnMouseReleased(event -> {
             // Reset remote drawing tracking when local drawing stops
-            if(connected) {
+            if (connected) {
                 remoteFirstPoint = false;
             }
         });
@@ -150,7 +158,6 @@ public class CanvasController {
             sendToServer(clearMessage);
         }
     }
-
 
     /**
      * Connects to the server and starts listening for messages.
@@ -184,6 +191,10 @@ public class CanvasController {
 
                     connected = true;
                     displayMessage("SUCCESS: Connected to " + serverIP + "\n");
+
+                    Message usernameMsg = Message.createUsernameMessage(username);
+                    sendToServer(usernameMsg);
+
                     displayMessage("Welcome, " + username + "!\n");
 
                     // Start listening for messages from server
@@ -230,7 +241,7 @@ public class CanvasController {
     /**
      * Continuously listens for messages from the server.
      * Runs in background thread - blocks at readObject() waiting for messages.
-     *
+     * <p>
      * All message types to be handled are in Message
      */
     private void processServerMessages() {
@@ -292,13 +303,14 @@ public class CanvasController {
 
         } else {
             // Unknown message type - just display it
-            displayMessage("[SERVER] " + message.toString() + "\n");
+            displayMessage("[SERVER] " + message + "\n");
         }
     }
 
     /**
      * Draws a point received from another client
      * Thread safe, uses platform.runlater() for gui updates
+     *
      * @param drawData DrawData Message containing coordinates color, size
      */
     private void drawRemotePoint(Message.DrawData drawData) {
@@ -318,12 +330,12 @@ public class CanvasController {
 
             //If distance is too large (pen lifted) or first point, draw a dot
             //Threshold of 9 pixels
-            if(remoteFirstPoint || distance > 9) {
+            if (remoteFirstPoint || distance > 9) {
                 //First point - just draw a dot
                 gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
                         drawData.getSize(), drawData.getSize());
                 remoteFirstPoint = false;
-            }else{
+            } else {
                 gc.strokeLine(remoteLastX, remoteLastY, x, y);
             }
 
@@ -343,7 +355,7 @@ public class CanvasController {
             displayMessage("Not connected to server!\n");
             return;
         }
-        Message chatMessage = Message.createChatMessage(username, message);
+        Message chatMessage = Message.createGuessMessage(username, message);
         sendToServer(chatMessage);
         chatTextInput.clear();
     }
