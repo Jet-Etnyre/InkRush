@@ -31,6 +31,7 @@ import javafx.util.Duration;
 public class ServerController {
     private static final int PORT = 23596;
     private static final int MAX_CLIENTS = 5;
+    private volatile int remainingSeconds = 60;
 
     @FXML
     private TextArea displayField1;
@@ -259,8 +260,8 @@ public class ServerController {
     private void startPhase3_RoundStart() {
         String word = gameLogic.getCurrentWord();
         String hint = gameLogic.getWordHint();
-
         gameLogic.resetTimer();
+        remainingSeconds = 60;
 
         // 1. Send the ACTUAL WORD to the Drawer
         // format: ROUND_START:apple:60
@@ -294,6 +295,11 @@ public class ServerController {
         // Create a loop that runs every 1 second
         gameLoop = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
 
+            // DECREMENT TIMER
+            remainingSeconds--;
+            if (remainingSeconds < 0) {
+                remainingSeconds = 0;
+            }
             // Check 1: Is Time Up?
             if (gameLogic.isTimeUp()) {
                 endRoundAndRotate("Time is up!");
@@ -557,10 +563,10 @@ public class ServerController {
 
                 // Check if correct
                 if (gameLogic.checkGuess(guess)) {
-                    int points = gameLogic.awardPoints(myConID);
-
+                    int calculatedPoints = Math.max(1, remainingSeconds);
+                    gameLogic.addScore(myConID, calculatedPoints);
                     Message toGuesser = Message.createChatMessage("SYSTEM",
-                            "You guessed the word! +" + points + " points");
+                            "You guessed the word! +" + calculatedPoints + " points");
                     sockServer[myConID].sendData(toGuesser);
 
                     Message toOthers = Message.createChatMessage("SYSTEM",
@@ -573,6 +579,7 @@ public class ServerController {
                         Platform.runLater(() -> endRoundAndRotate("Everyone guessed correctly!"));
                     }
                 } else {
+                    // Wrong guess logic (keep existing)
                     Message wrongGuess = Message.createChatMessage(username, guess);
                     broadcastMessage(wrongGuess);
                 }
@@ -601,6 +608,7 @@ public class ServerController {
                 }
             }
         }
+
 
         /**
          * Closes connection and cleans up resources

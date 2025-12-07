@@ -112,6 +112,19 @@ public class GameLogic {
     }
 
     /**
+     * Adds specific points to a specific player.
+     * Used by ServerController for time-based scoring.
+     * @param clientID the client ID to update
+     * @param pointsToAdd amount of points to add
+     */
+    public void addScore(int clientID, int pointsToAdd) {
+        if (players.containsKey(clientID)) {
+            PlayerInfo p = players.get(clientID);
+            p.addScore(pointsToAdd);
+        }
+    }
+
+    /**
      * Selects a random word from the word bank.
      * @return randomly selected word
      */
