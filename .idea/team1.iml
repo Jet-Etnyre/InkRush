@@ -15,5 +15,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="h2database.h2" level="project" />
   </component>
 </module>

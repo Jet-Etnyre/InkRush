@@ -9,8 +9,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="lib" level="project" />
-    <orderEntry type="library" name="javaFXlib" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="library" exported="" name="javaFXlib" level="project" />
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/h2-2.4.240.jar!/" />
