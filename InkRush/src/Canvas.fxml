@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.layout.StackPane?>
 <VBox prefHeight="677.0" prefWidth="720.0" spacing="10" style="-fx-background-color: #7af09a;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
    <GridPane prefHeight="81.0" prefWidth="720.0">
      <columnConstraints>
@@ -72,8 +73,10 @@
    </GridPane>
    <HBox prefHeight="100.0" prefWidth="200.0">
       <children>
-      
-          <Canvas fx:id="drawingCanvas" height="300" width="500" />
+
+          <StackPane style="-fx-border-color: #2F4F4F; -fx-border-width: 5; -fx-border-radius: 8; -fx-padding: 5;">
+              <Canvas fx:id="drawingCanvas" height="300" width="500" />
+          </StackPane>
          <VBox alignment="CENTER" prefHeight="300.0" prefWidth="222.0">
             <children>
                 <Button fx:id="clearButton" alignment="CENTER" prefHeight="51.0" prefWidth="84.0" text="Clear" textAlignment="CENTER" onAction="#clearCanvas">

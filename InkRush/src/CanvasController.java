@@ -146,6 +146,12 @@ public class CanvasController {
         });
     }
 
+    /**
+     * Clears the drawing canvas and resets the drawing related state.
+     * This method will remove all graphics from the canvas, and resets local and
+     * remote coordinate tracking, and notifies the server to clear the
+     * canvas for all connected players if the client is connected.
+     */
     @FXML
     private void clearCanvas() {
         if(!canDraw) {
@@ -253,7 +259,7 @@ public class CanvasController {
 
     /**
      * Shows an error popup and then force-closes the application window.
-     * Uses Platform.runLater with an anonymous inner class (no lambda).
+     * Uses Platform.runLater with an anonymous inner class.
      */
     private void closeWindowOnError(final String header, final String content) {
         Platform.runLater(new Runnable() {
