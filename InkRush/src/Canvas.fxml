@@ -57,7 +57,10 @@
                             <Font name="Goudy Stout" size="16.0" />
                         </font>
                     </Label>
-                    <Label fx:id="scoreLabel" prefHeight="17.0" prefWidth="127.0" />
+                    <Label fx:id="scoreLabel" alignment="CENTER" prefHeight="17.0" prefWidth="127.0" text="0">
+                  <font>
+                     <Font name="Goudy Stout" size="16.0" />
+                  </font></Label>
                 </children>
             </HBox>
         </children>

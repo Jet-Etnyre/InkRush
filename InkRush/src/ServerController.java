@@ -558,6 +558,18 @@ public class ServerController {
                 // Check if correct
                 if (gameLogic.checkGuess(guess)) {
                     int points = gameLogic.awardPoints(myConID);
+                    int totalScore = gameLogic.getPlayerScore(myConID);
+
+                    Message scoreMsg = Message.createScoreMessage(totalScore);
+                    sockServer[myConID].sendData(scoreMsg);
+
+                    int drawerID = currentDrawerID;
+
+                    // Safety check: ensure drawer is still connected before sending score
+                    if (drawerID != -1 && sockServer[drawerID] != null && sockServer[drawerID].alive) {
+                        int drawerTotal = gameLogic.getPlayerScore(drawerID);
+                        sockServer[drawerID].sendData(Message.createScoreMessage(drawerTotal));
+                    }
 
                     Message toGuesser = Message.createChatMessage("SYSTEM",
                             "You guessed the word! +" + points + " points");
