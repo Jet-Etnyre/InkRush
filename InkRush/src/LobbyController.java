@@ -18,6 +18,7 @@ import javafx.scene.media.Media;     // Import for music
 import javafx.scene.media.MediaPlayer; // Import for music player
 
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Controller for the Lobby screen.
@@ -46,6 +47,10 @@ public class LobbyController {
     private double lastX;
     private double lastY;
 
+    // --- Sound Fields ---
+    private MediaPlayer backgroundMusicPlayer;
+    private AudioClip joinSound;
+
     /**
      * Initializes the controller class.
      * Sets default values and prepares the UI.
@@ -62,6 +67,9 @@ public class LobbyController {
 
         // Setup the drawing logic
         setupAvatarDrawing();
+
+        // Load and Play Background Music ---
+        setupAudio();
     }
 
     private void setupAvatarDrawing() {
@@ -84,14 +92,48 @@ public class LobbyController {
             lastY = e.getY();
         });
     }
+    /**
+     * Helper method to load audio resources
+     */
+    private void setupAudio() {
+        try {
+            // 1. Load Background Music
+            URL musicUrl = getClass().getResource("lobby_music.mp3");
+            if (musicUrl != null) {
+                Media media = new Media(musicUrl.toExternalForm());
+                backgroundMusicPlayer = new MediaPlayer(media);
+                backgroundMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE); // Loop forever
+                backgroundMusicPlayer.setVolume(0.5); // 50% volume
+                backgroundMusicPlayer.play();
+            } else {
+                System.out.println("Warning: lobby_music.mp3 not found");
+            }
 
+            // 2. Load Join Sound Effect
+            URL soundUrl = getClass().getResource("join.wav");
+            if (soundUrl != null) {
+                joinSound = new AudioClip(soundUrl.toExternalForm());
+            } else {
+                System.out.println("Warning: join.wav not found");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error loading audio: " + e.getMessage());
+        }
+    }
     /**
      * Handles the "Join Game" button click.
      * Validates input, loads the game screen, passes connection info, and switches scenes.
      */
     @FXML
     public void onJoinClicked() {
+        // Play the sound effect immediately
+        if (joinSound != null) {
+            joinSound.play();
+        }
+
         try {
+
             String username = playerNameField.getText().trim();
             String serverIP = ipAddressField.getText().trim();
 
@@ -105,8 +147,15 @@ public class LobbyController {
                 return;
             }
 
+
             // Take a snapshot of whatever the user drew
             WritableImage avatarImage = avatarCanvas.snapshot(null, null);
+
+            // Stop the Lobby Music before switching
+            if (backgroundMusicPlayer != null) {
+                backgroundMusicPlayer.stop();
+            }
+
             // 2. Load the Game (Canvas) FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Canvas.fxml"));
             Parent gameRoot = loader.load();
