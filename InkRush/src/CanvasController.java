@@ -200,11 +200,15 @@ public class CanvasController {
                     displayMessage("Please check the IP address format.\n");
 
                 } catch (SocketTimeoutException e) {
-                    // CATCH TIMEOUT EXPLICITLY
+                    // 1. Clean up the internal socket first
                     closeSocketOnError();
-                    displayMessage("\n[ERROR] Connection Timed Out!\n");
-                    displayMessage("The server did not respond.\n");
-                    displayMessage("Likely cause: SERVER FULL or High Latency.\n");
+
+                    // 2. Show the popup and close the window
+                    closeWindowOnError(
+                            "Connection Timed Out",
+                            "The server did not respond in time (3s).\n" +
+                                    "Likely cause: The Server is FULL or not running."
+                    );
 
                 } catch (IOException e) {
                     // Catch other IO errors (like Connection Refused)
@@ -232,6 +236,34 @@ public class CanvasController {
         }
     }
 
+    /**
+     * Shows an error popup and then force-closes the application window.
+     * Uses Platform.runLater with an anonymous inner class (no lambda).
+     */
+    private void closeWindowOnError(final String header, final String content) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                // 1. Create a popup Alert
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Connection Error");
+                alert.setHeaderText(header);
+                alert.setContentText(content);
+
+                // 2. Wait for the user to click "OK"
+                alert.showAndWait();
+
+                // 3. Get the current window (Stage) and close it
+                if (chatTextArea.getScene() != null) {
+                    Stage stage = (Stage) chatTextArea.getScene().getWindow();
+                    stage.close();
+                }
+
+                // 4. Ensure background threads are killed
+                disconnect();
+            }
+        });
+    }
     /**
      * Continuously listens for messages from the server.
      * Runs in background thread - blocks at readObject() waiting for messages.
