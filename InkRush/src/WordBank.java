@@ -52,6 +52,48 @@ public class WordBank {
     // --- GAME LOGIC ---
 
     /**
+     * Gets a random word from a category, excluding a specific list of words.
+     * @param category The category to search
+     * @param excludedWords A list of words to NOT pick
+     * @return A random unique word, or null if we ran out of words.
+     */
+    public String getRandomWordFromCategoryAssumingExclusions(String category, List<String> excludedWords) {
+        // Dynamic SQL generation: WHERE category = ? AND text NOT IN (?, ?, ?)
+        StringBuilder sql = new StringBuilder("SELECT text FROM Words WHERE category = ?");
+
+        if (!excludedWords.isEmpty()) {
+            sql.append(" AND text NOT IN (");
+            for (int i = 0; i < excludedWords.size(); i++) {
+                sql.append(i == 0 ? "?" : ", ?");
+            }
+            sql.append(")");
+        }
+
+        sql.append(" ORDER BY RAND() LIMIT 1");
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+            pstmt.setString(paramIndex++, category);
+
+            // Set all excluded words as parameters
+            for (String ex : excludedWords) {
+                pstmt.setString(paramIndex++, ex);
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("text");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * Generates a list of 3 random words for a game round.
      * <p>
      * Logic:
@@ -62,30 +104,29 @@ public class WordBank {
      *
      * @return A List of 3 distinct strings (e.g., ["Lion", "Toaster", "Running"]).
      */
-    public List<String> getThreeWords() {
+    // Change signature to accept excluded words list
+    public List<String> getThreeWords(List<String> excludedWords) {
         List<String> resultWords = new ArrayList<>();
         List<String> categories = getAllCategories();
 
-        // Safety check: Ensure we have enough categories to play
-        if (categories.size() < 3) {
-            System.out.println("Error: Not enough categories in database!");
-            return resultWords;
-        }
+        if (categories.size() < 3) return resultWords;
 
-        // Shuffle categories to ensure randomness every time
         Collections.shuffle(categories);
-
-        // Select the first 3 categories after shuffling
         List<String> selectedCategories = categories.subList(0, 3);
 
-        // Fetch one random word for each selected category
         for (String category : selectedCategories) {
-            String word = getRandomWordFromCategory(category);
+            // Use the new exclusion-aware method
+            String word = getRandomWordFromCategoryAssumingExclusions(category, excludedWords);
+
+            // Fallback: If we ran out of unique words in that category, just get any random one
+            if (word == null) {
+                word = getRandomWordFromCategory(category);
+            }
+
             if (word != null) {
                 resultWords.add(word);
             }
         }
-
         return resultWords;
     }
 
@@ -259,14 +300,18 @@ public class WordBank {
 
         WordBank wb = new WordBank(filePath);
 
+        // Create a dummy exclusion list (empty for now)
+        List<String> testExclusions = new ArrayList<>();
+
         System.out.println("Testing WordBank Logic...");
 
+
         // Test 1: Generate a set of words
-        List<String> gameWords = wb.getThreeWords();
+        List<String> gameWords = wb.getThreeWords(testExclusions);
         System.out.println("Generated Game Words: " + gameWords);
 
         // Test 2: Generate a second set to verify randomness
-        List<String> gameWords2 = wb.getThreeWords();
+        List<String> gameWords2 = wb.getThreeWords(testExclusions);
         System.out.println("Generated Game Words (Round 2): " + gameWords2);
     }
 }
