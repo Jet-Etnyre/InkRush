@@ -36,6 +36,10 @@ public class GameLogic {
     private WordBank wordBank; // Dependency Injection
     private String[] currentWordOptions; // store the 3 choices
 
+    // Round logic vars
+    private int currentRound = 0;
+    private static final int MAX_ROUNDS = 5;
+
     /**
      * Creates a new GameLogic instance.
      * Initializes player tracking and game state.
@@ -105,6 +109,57 @@ public class GameLogic {
         System.arraycopy(currentWordOptions, 0, roundInfo, 1, 3);
 
         return roundInfo;
+    }
+
+    /**
+     * updates the round
+     */
+    public void incrementRound() {
+        currentRound++;
+    }
+
+    /**
+     * Round getter
+     * @return int current round
+     */
+    public int getCurrentRound() {
+        return currentRound;
+    }
+
+    /**
+     * max rounds getter
+     * @return int max rounds
+     */
+    public int getMaxRounds() {
+        return MAX_ROUNDS;
+    }
+
+    /**
+     * Checks if the game has reached the round limit.
+     */
+    public boolean isGameComplete() {
+        return currentRound >= MAX_ROUNDS;
+    }
+
+    /**
+     * Resets the game state for a fresh start.
+     */
+    public void resetGame() {
+        currentRound = 0;
+        resetScores();
+        endRound(); // Ensure active flags are cleared
+    }
+
+    /**
+     * Determines the winner based on the highest score.
+     * @return String description of the winner
+     */
+    public String getWinnerDescription() {
+        List<PlayerInfo> leaderboard = getLeaderboard();
+        if (leaderboard.isEmpty()) return "No players.";
+
+        PlayerInfo winner = leaderboard.get(0);
+        return winner.getUsername() + " with " + winner.getScore() + " points!";
     }
 
     /**
