@@ -136,6 +136,12 @@ public class CanvasController {
         });
     }
 
+    /**
+     * Clears the drawing canvas and resets the drawing related state.
+     * This method will remove all graphics from the canvas, and resets local and
+     * remote coordinate tracking, and notifies the server to clear the
+     * canvas for all connected players if the client is connected.
+     */
     @FXML
     private void clearCanvas() {
         // Get graphics context and clear the entire canvas
