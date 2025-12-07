@@ -19,6 +19,10 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
+import javafx.scene.control.Alert;
+import javafx.stage.Stage;
+
 /**
  * Controller for the InkRush game client.
  * Handles user input, server communication, and GUI updates.
