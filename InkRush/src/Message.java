@@ -24,6 +24,7 @@ public class Message implements Serializable {
     public static final String WORD_OPTIONS = "WORD_OPTIONS";
     public static final String WORD_SELECTED = "WORD_SELECTED";
     public static final String LEADERBOARD = "LEADERBOARD";
+    public static final String SCORE = "SCORE";
 
     public static final String USERNAME = "USERNAME";
 
@@ -208,6 +209,14 @@ public class Message implements Serializable {
     }
 
     /**
+     * parse score message helper
+     * @return Integer
+     */
+    public int parseScoreMessage() {
+        return Integer.parseInt(messageContents);
+    }
+
+    /**
      * Creates a CONNECTED message.
      *
      * @param clientID the client ID
@@ -215,6 +224,15 @@ public class Message implements Serializable {
      */
     public static Message createConnectedMessage(int clientID) {
         return new Message(CONNECTED, String.valueOf(clientID));
+    }
+
+    /**
+     * Creates a SCORE message
+     * @param score int score
+     * @return message object
+     */
+    public static Message createScoreMessage(int score) {
+        return new Message(SCORE, String.valueOf(score));
     }
 
     /**
