@@ -65,6 +65,7 @@ public class CanvasController {
     private double remoteLastX;
     private double remoteLastY;
     private boolean remoteFirstPoint = true;
+    private volatile boolean canDraw = false;
 
     // Hardcoded brush styles for now
     private static final double BRUSH_SIZE = 4.0;
@@ -108,12 +109,18 @@ public class CanvasController {
 
         // When mouse is pressed
         drawingCanvas.setOnMousePressed(event -> {
+            if(!canDraw) {
+                return;
+            }
             lastX = event.getX();
             lastY = event.getY();
         });
 
         // When mouse is dragged so moving while clicking
         drawingCanvas.setOnMouseDragged(event -> {
+            if(!canDraw) {
+                return;
+            }
             double x = event.getX();
             double y = event.getY();
 
@@ -130,6 +137,9 @@ public class CanvasController {
 
         drawingCanvas.setOnMouseReleased(event -> {
             // Reset remote drawing tracking when local drawing stops
+            if(!canDraw) {
+                return;
+            }
             if(connected) {
                 remoteFirstPoint = false;
             }
@@ -138,6 +148,11 @@ public class CanvasController {
 
     @FXML
     private void clearCanvas() {
+        if(!canDraw) {
+            displayMessage("Only the drawer can clear the canvas!\n");
+            return;
+        }
+
         // Get graphics context and clear the entire canvas
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
@@ -305,6 +320,15 @@ public class CanvasController {
             int clientID = message.parseConnectedMessage();
             displayMessage("You are Client " + clientID + "\n");
 
+        }else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
+            canDraw = true;
+            Platform.runLater(() -> {
+                if (wordLabel != null) {
+                    wordLabel.setText("YOU ARE DRAWING!");
+                }
+                drawingCanvas.setStyle("-fx-cursor: crosshair;");
+            });
+            displayMessage("*** YOU ARE THE DRAWER! ***\n");
         } else if (messageType.equals(Message.CHAT)) {
             // Chat message format: CHAT:username:message
             Message.ChatData chatData = message.parseChatMessage();

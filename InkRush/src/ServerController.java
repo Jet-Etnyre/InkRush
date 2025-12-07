@@ -17,7 +17,7 @@ import org.w3c.dom.Text;
  * Controller for InkRush game Server.
  * Manages up to 5 client connections with dedicated display areas for each client to show incoming game states.
  * Uses executor service for multithreaded client handling with JavaFX Task patter.
- * <p>
+ *
  * All GUI update are handled through the JavaFX Application Thread. The sockservers are threads for each client, performing tasks
  * and communicating back with the JFXAT to update the server GUI
  */
@@ -47,6 +47,7 @@ public class ServerController {
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
     private GameLogic gameLogic;
+    private volatile int currentDrawerID = -1;
 
     /**
      * Initialize the controller after FXML is loaded.
@@ -95,6 +96,11 @@ public class ServerController {
 
                             synchronized (ServerController.this) {
                                 nClientsActive++;
+
+                                if(currentDrawerID == -1) {
+                                    currentDrawerID = counter;
+                                    displayMessageToAll("[Server] Client " + counter + " is now the DRAWER\n");
+                                }
                             }
 
                             executor.execute(sockServer[counter]);
@@ -290,6 +296,9 @@ public class ServerController {
         private void processConnection() throws IOException {
             //Send CONNECTED Message to client
             sendData(Message.createConnectedMessage(myConID));
+            if (myConID == currentDrawerID) {
+                sendData(Message.createDrawerAssignedMessage());
+            }
             displayMessage(myConID, "Client " + myConID + " is ready to play \n");
 
             while (alive) {
@@ -330,6 +339,10 @@ public class ServerController {
                 displayMessage(myConID, "Broadcasting chat from " + chatData.getUsername() + "\n");
                 broadcastMessage(message);
             } else if (messageType.equals(Message.DRAW)) {
+                if (myConID != currentDrawerID) {
+                    displayMessage(myConID, "REJECTED: Client " + myConID + " is not the drawer!\n");
+                    return;
+                }
                 displayMessage(myConID, "Broadcasting drawing point\n");
                 broadcastExcept(message, myConID);
             } else if (messageType.equals(Message.GUESS)) {
@@ -376,6 +389,10 @@ public class ServerController {
                     broadcastMessage(wrongGuess);
                 }
             } else if (messageType.equals(Message.CLEAR)) {
+                if (myConID != currentDrawerID) {
+                    displayMessage(myConID, "REJECTED: Client " + myConID + " is not the drawer!\n");
+                    return;
+                }
                 displayMessage(myConID, "Broadcasting canvas clear\n");
                 broadcastMessage(message);
             } else {
