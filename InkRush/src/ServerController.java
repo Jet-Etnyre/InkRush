@@ -423,7 +423,7 @@ public class ServerController {
                 gameLogic.addPlayer(myConID, username);
                 displayMessage(myConID, "Player registered: " + username + "\n");
                 // Only start a round if no round is currently active
-                if (gameLogic.getPlayerCount() >= 2 && !gameLogic.isRoundActive()) {
+                if (gameLogic.getPlayerCount() >= 4 && !gameLogic.isRoundActive()) {
                     startNewRound();
                 } else if (gameLogic.isRoundActive()) {
                     // Player joined mid-round, send them current round info
@@ -432,8 +432,6 @@ public class ServerController {
                     sockServer[myConID].sendData(roundMsg);
 
                     displayMessage(myConID, username + " joined ongoing round as guesser\n");
-                } else {
-                    displayMessage(myConID, "UNKNOWN MESSAGE TYPE: " + message + "\n");
                 }
             }
         }
