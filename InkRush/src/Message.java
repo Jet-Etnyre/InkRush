@@ -23,6 +23,7 @@ public class Message implements Serializable {
     public static final String LEADER = "LEADER";
     public static final String WORD_OPTIONS = "WORD_OPTIONS";
     public static final String WORD_SELECTED = "WORD_SELECTED";
+    public static final String LEADERBOARD = "LEADERBOARD";
 
     public static final String USERNAME = "USERNAME";
 
@@ -267,6 +268,15 @@ public class Message implements Serializable {
      */
     public static Message createGuessMessage(String username, String guess) {
         return new Message(GUESS, username + ":" + guess);
+    }
+
+    /**
+     * Creates a LEADERBOARD message
+     * @param leaderboardString stirng of leaderboard info
+     * @return Message object
+     */
+    public static Message createLeaderboardMessage(String leaderboardString) {
+        return new Message(LEADERBOARD, leaderboardString);
     }
 
     /**

@@ -88,6 +88,12 @@ public class GameLogic {
         if (playerOrder.isEmpty()) {
             return -1;
         }
+
+        // If the index is out of bounds (due to player removal), reset to 0
+        if (currentDrawerIndex >= playerOrder.size()) {
+            currentDrawerIndex = 0;
+        }
+
         // select next drawer (rotates through all players)
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
@@ -358,6 +364,13 @@ public class GameLogic {
         for (PlayerInfo player : players.values()) {
             player.resetScore();
         }
+    }
+
+    /**
+     * Resets the round timer to the current time.
+     */
+    public void resetTimer() {
+        this.roundStartTime = System.currentTimeMillis();
     }
 
     /**
