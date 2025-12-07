@@ -190,7 +190,7 @@ public class CanvasController {
     private void onStartGameClicked() {
         if (connected) {
             sendToServer(Message.createStartGameMessage());
-            startGame.setDisable(false);
+            startGame.setDisable(true);
         }
     }
 

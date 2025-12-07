@@ -47,7 +47,7 @@ public class ServerController {
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
     private GameLogic gameLogic;
-    private final int currentDrawerID = -1;
+    private volatile int currentDrawerID = -1;
     private volatile int leaderID = -1; // track who is the leader
     private boolean gameStarted = false; // track game state
 
@@ -99,7 +99,7 @@ public class ServerController {
                             synchronized (ServerController.this) {
                                 nClientsActive++;
 
-                                if (currentDrawerID == -1) {
+                                if (leaderID == -1) {
                                     leaderID = counter;
                                 }
                             }
@@ -376,6 +376,8 @@ public class ServerController {
                 broadcastExcept(message, myConID);
 
             } else if (messageType.equals(Message.START_GAME)) {
+                if(gameStarted) return;
+
                 if (myConID == leaderID) {
                     displayMessageToAll("[Server] Leader started the game!\n");
                     gameStarted = true;
