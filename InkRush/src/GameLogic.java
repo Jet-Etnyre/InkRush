@@ -18,8 +18,8 @@ import java.util.Random;
  */
 public class GameLogic {
     private static final int ROUND_DURATION_SECONDS = 60;
-    private static final int[] GUESS_POINTS = {200, 150, 100, 50}; // the 1st, 2nd, 3rd, and 4th guesser
-    private static final int POINTS_DRAWER_BONUS = 50; // drawer gets points when someone guesses
+    //private static final int[] GUESS_POINTS = {200, 150, 100, 50}; // the 1st, 2nd, 3rd, and 4th guesser
+    //private static final int POINTS_DRAWER_BONUS = 50; // drawer gets points when someone guesses
 
     private String currentWord;
     private int currentDrawerID;
@@ -147,11 +147,10 @@ public class GameLogic {
     }
 
     /**
-     * Awards points to a player for a correct guess based on guess order.
-     * First correct guess gets the most points, decreasing for later guessers.
-     * Also awards bonus points to the drawer.
-     * @param guesserID to the ID of player who guessed correctly
-     * @return the points awarded to the guesser
+     * Awards points to a player and the drawer based on the time remaining.
+     * The faster the guess, the higher the points for both.
+     * @param guesserID the ID of player who guessed correctly
+     * @return the points awarded
      */
     public int awardPoints(int guesserID) {
         // check if this player already guessed correctly
@@ -160,7 +159,7 @@ public class GameLogic {
         }
         // check if guesser is the drawer (can't guess your own word!)
         if (guesserID == currentDrawerID) {
-            return 0; // drawer can't score by guessing
+            return 0;
         }
 
         PlayerInfo guesser = players.get(guesserID);
@@ -170,21 +169,16 @@ public class GameLogic {
             return 0;
         }
 
-        // calculate points based on guess order
-        int pointsAwarded = 0;
-        if (guessCount < GUESS_POINTS.length) {
-            pointsAwarded = GUESS_POINTS[guessCount];
-        } else {
-            // if more than 4 guessers, give minimum points
-            pointsAwarded = GUESS_POINTS[GUESS_POINTS.length - 1];
-        }
+        // Points equal the seconds remaining on the clock
+        int pointsAwarded = getTimeRemaining();
 
-        // award points to guesser
+        // 1. Award points to the guesser
         guesser.addScore(pointsAwarded);
 
-        // award bonus to drawer (gets points for each correct guess)
+        // 2. Award the same amount to the drawer
+        // This incentivizes the drawer to draw quickly and clearly
         if (drawer != null) {
-            drawer.addScore(POINTS_DRAWER_BONUS);
+            drawer.addScore(pointsAwarded);
         }
 
         // track this guesser

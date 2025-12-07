@@ -41,7 +41,7 @@
                             <Font name="System Bold" size="16.0" />
                         </font>
                     </Label>
-                    <Button fx:id="startGame" alignment="TOP_CENTER" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="40.0" prefWidth="187.0" text="Start Game" textAlignment="CENTER" wrapText="true">
+                    <Button fx:id="startGame" alignment="TOP_CENTER" contentDisplay="RIGHT" layoutX="50.0" minHeight="-Infinity" prefHeight="46.0" prefWidth="182.0" text="Start Game" textAlignment="CENTER" wrapText="true">
                         <font>
                             <Font name="Goudy Stout" size="12.0" />
                         </font>
@@ -81,7 +81,10 @@
                     <Label text="Word to Draw">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
-                    <Label fx:id="wordToGuessLabel" />
+                    <Label fx:id="wordToGuessLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="28.0" prefWidth="202.0">
+                  <font>
+                     <Font name="System Bold Italic" size="18.0" />
+                  </font></Label>
                 </children>
             </HBox>
         </children>
