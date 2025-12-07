@@ -1,15 +1,19 @@
+import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class WordBank {
-    // Connetcion Constant
+    // Connection Constant
     private static final String DB_URL = "jdbc:h2:./pictionaryDB";
     private static final String USER = "sa";
     private static final String PASS = "";
+    // Store the path to the words file
+    private String dictionaryFilePath;
 
-    public WordBank(){
+    public WordBank(String filePath) {
+        this.dictionaryFilePath = filePath;
         try{
             //Force load the driver
             Class.forName("org.h2.Driver");
@@ -19,7 +23,7 @@ public class WordBank {
 
             // load sample data only if the table is empty
             if(isTableEmpty()){
-                populateSampleData();
+                populateSampleData(this.dictionaryFilePath);
             }
         }catch(ClassNotFoundException e){
             e.printStackTrace();
@@ -119,29 +123,31 @@ public class WordBank {
         return true;
     }
 
-    private void populateSampleData() {
-        System.out.println("Database is empty. Populating with sample words...");
+    private void populateSampleData(String filename) {
+        System.out.println("Loading words from resources: " + filename);
 
-        // 5 Categories, 3 words each
-        addWord("Giraffe", "Animals");
-        addWord("Lion", "Animals");
-        addWord("Elephant", "Animals");
+        // The "/" means "root of the resources folder"
+        InputStream is = getClass().getResourceAsStream("/" + filename);
 
-        addWord("Toaster", "Objects");
-        addWord("Hammer", "Objects");
-        addWord("Umbrella", "Objects");
+        if (is == null) {
+            System.out.println("CRITICAL ERROR: Could not find '" + filename + "' in resources!");
+            return;
+        }
 
-        addWord("Running", "Actions");
-        addWord("Swimming", "Actions");
-        addWord("Cooking", "Actions");
-
-        addWord("Hospital", "Places");
-        addWord("School", "Places");
-        addWord("Airport", "Places");
-
-        addWord("Batman", "Characters");
-        addWord("Spiderman", "Characters");
-        addWord("Joker", "Characters");
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            String line;
+            int count = 0;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length == 2) {
+                    addWord(parts[1].trim(), parts[0].trim());
+                    count++;
+                }
+            }
+            System.out.println("SUCCESS: Loaded " + count + " words.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void addWord(String text, String category) {
@@ -159,7 +165,11 @@ public class WordBank {
 
     // test main
     public static void main(String[] args) {
-        WordBank wb = new WordBank();
+        String filePath;
+        filePath = args[0];
+        System.out.println("Starting WordBank with file: " + filePath);
+
+        WordBank wb = new WordBank(filePath);
 
         System.out.println("Testing WordBank Logic...");
 
