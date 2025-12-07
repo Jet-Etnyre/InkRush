@@ -25,6 +25,11 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 
+//using Interpolation to solve the losing packet while drawing issue
+import javafx.animation.AnimationTimer;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * Controller for the InkRush game client.
  * Handles user input, server communication, and GUI updates.
