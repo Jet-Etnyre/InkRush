@@ -57,9 +57,11 @@ public class CanvasController {
     private Canvas drawingCanvas;
 
     @FXML
-    private Label nameLabel; // Matches teammate's file
+    private Label nameLabel;
     @FXML
     private Label wordLabel;
+    @FXML
+    private Label roundLabel;
 
     // NEW FXML controls
     @FXML private ColorPicker colorPicker;
@@ -95,13 +97,13 @@ public class CanvasController {
     private String username = "Guest";
     private volatile boolean connected = false;
 
-    // Drawing tracking variables (Teammate's logic)
+    // Drawing tracking variables
     private double lastX;
     private double lastY;
     private boolean remoteFirstPoint = true;
     private volatile boolean canDraw = false;
 
-    // Dynamic brush state (replaces hardcoded constants)
+    // Dynamic brush state
     private Color currentColor = Color.BLACK;
     private double currentBrushSize = 4.0;
 
