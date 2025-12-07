@@ -111,7 +111,7 @@ public class CanvasController {
     private double currentAnimY;
 
     // How fast the animation catches up
-    private static final double SMOOTHING_SPEED = 0.8;
+    private static final double SMOOTHING_SPEED = 0.9;
 
 
     /**
@@ -252,8 +252,8 @@ public class CanvasController {
     }
 
     /**
-     * Processes the queue of incoming points and draws them smoothly.
-     * Handles "Pen Lifts" and "Catch Up" logic.
+     * Processes the queue of incoming points.
+     * Uses a loop to "Speed Read" the queue if it gets too full.
      */
     private void processAnimationQueue() {
         if (pointQueue.isEmpty()) return;
@@ -262,60 +262,79 @@ public class CanvasController {
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-        PointRequest req = pointQueue.peek();
-        Message.DrawData target = req.data;
-
-        // CASE 1: New Stroke (Pen Lift) or First Point
-        // We "Teleport" to the new spot without drawing a line
-        if (remoteFirstPoint || req.isNewStroke) {
-            currentAnimX = target.getX();
-            currentAnimY = target.getY();
-            remoteFirstPoint = false;
-
-            // Draw the starting dot
-            gc.setFill(Color.web(target.getColor()));
-            gc.fillOval(currentAnimX - target.getSize()/2, currentAnimY - target.getSize()/2,
-                    target.getSize(), target.getSize());
-
-            pointQueue.poll();
-            return;
+        // SPEED UP LOGIC:
+        // If queue has > 2 points, draw up to 10 points per frame (Catch up!)
+        // Otherwise, draw 1 point per frame (Smooth)
+        int pointsToProcess;
+        if (pointQueue.size() > 2) {
+            pointsToProcess = 10;
+        } else {
+            pointsToProcess = 1;
         }
 
-        double dx = target.getX() - currentAnimX;
-        double dy = target.getY() - currentAnimY;
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        for (int i = 0; i < pointsToProcess; i++) {
+            // Stop if we run out of points mid-loop
+            if (pointQueue.isEmpty()) return;
 
-        // CASE 2: Very close? Just snap and finish.
-        if (distance < 1.0) {
+            PointRequest req = pointQueue.peek();
+            Message.DrawData target = req.data;
+
+            // CASE 1: New Stroke (Pen Lift)
+            if (remoteFirstPoint || req.isNewStroke) {
+                currentAnimX = target.getX();
+                currentAnimY = target.getY();
+                remoteFirstPoint = false;
+
+                gc.setFill(Color.web(target.getColor()));
+                gc.fillOval(currentAnimX - target.getSize()/2, currentAnimY - target.getSize()/2,
+                        target.getSize(), target.getSize());
+
+                pointQueue.poll();
+                continue; // Move to next iteration
+            }
+
+            double dx = target.getX() - currentAnimX;
+            double dy = target.getY() - currentAnimY;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            // CASE 2: Very close? Just snap.
+            if (distance < 1.0) {
+                gc.setStroke(Color.web(target.getColor()));
+                gc.setLineWidth(target.getSize());
+                gc.strokeLine(currentAnimX, currentAnimY, target.getX(), target.getY());
+
+                currentAnimX = target.getX();
+                currentAnimY = target.getY();
+
+                pointQueue.poll();
+                continue;
+            }
+
+            // CASE 3: Calculate Speed
+            // If we are in the middle of a loop (catching up), go Instant (1.0).
+            // Otherwise, use the smooth speed.
+            double actualSpeed;
+            if (i > 0) {
+                actualSpeed = 1.0;
+            } else {
+                actualSpeed = SMOOTHING_SPEED;
+            }
+
+            double moveX = currentAnimX + (dx * actualSpeed);
+            double moveY = currentAnimY + (dy * actualSpeed);
+
             gc.setStroke(Color.web(target.getColor()));
             gc.setLineWidth(target.getSize());
-            gc.strokeLine(currentAnimX, currentAnimY, target.getX(), target.getY());
+            gc.strokeLine(currentAnimX, currentAnimY, moveX, moveY);
 
-            currentAnimX = target.getX();
-            currentAnimY = target.getY();
-            pointQueue.poll();
-            return;
+            currentAnimX = moveX;
+            currentAnimY = moveY;
+
+            // If we moved 100% of the way (speed 1.0), remove the point
+            if (actualSpeed >= 1.0) {
+                pointQueue.poll();
+            }
         }
-
-        // CASE 3: Catch-Up Logic (Responsiveness)
-        // If queue has ANY backlog (> 1 point), go full speed (1.0).
-        double actualSpeed;
-        if (pointQueue.size() > 1) {
-            actualSpeed = 1.0;
-        } else {
-            actualSpeed = SMOOTHING_SPEED;
-        }
-
-        // Move smoothly
-        double moveX = currentAnimX + (dx * actualSpeed);
-        double moveY = currentAnimY + (dy * actualSpeed);
-
-        gc.setStroke(Color.web(target.getColor()));
-        gc.setLineWidth(target.getSize());
-        gc.strokeLine(currentAnimX, currentAnimY, moveX, moveY);
-
-        currentAnimX = moveX;
-        currentAnimY = moveY;
     }
 
     /**
