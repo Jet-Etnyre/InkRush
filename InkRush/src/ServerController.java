@@ -54,6 +54,7 @@ public class ServerController {
     private int counter = 1; // counter of number of connections
     private int nClientsActive = 0;
     private GameLogic gameLogic;
+    private WordBank wordBank;
     private volatile int currentDrawerID = -1;
     private volatile int leaderID = -1; // track who is the leader
     private boolean gameStarted = false; // track game state
@@ -82,7 +83,17 @@ public class ServerController {
 
         sockServer = new SockServer[MAX_CLIENTS + 1];
         executor = Executors.newFixedThreadPool(MAX_CLIENTS);
-        gameLogic = new GameLogic(); // added the initializer for new gamelogic
+    }
+
+    /**
+     * Called by ServerApp after FXML is loaded to inject the WordBank dependency.
+     * This is the official way to start GameLogic now.
+     * @param bank the initialized WordBank object
+     */
+    public void setWordBankDependency(WordBank bank) {
+        this.wordBank = bank;
+        // GameLogic can only be initialized AFTER the WordBank is ready.
+        this.gameLogic = new GameLogic(this.wordBank);
     }
 
 
@@ -130,26 +141,26 @@ public class ServerController {
         executor.execute(serverTask);
     }
 
-    /**
-     * Starts a new round of the game.
-     */
-    private void startNewRound() {
-        int drawerID = gameLogic.startNewRound();
-        String word = gameLogic.getCurrentWord();
-        String hint = gameLogic.getWordHint();
-
-        displayMessageToAll("[Server] Round starting! Client " + drawerID + " is drawing\n");
-
-        Message drawerMsg = Message.createRoundStartMessage(word, 60);
-        sockServer[drawerID].sendData(drawerMsg);
-
-        for (int i = 1; i <= MAX_CLIENTS; i++) {
-            if (i != drawerID && sockServer[i] != null && sockServer[i].alive) {
-                Message guesserMsg = Message.createRoundStartMessage(hint, 60);
-                sockServer[i].sendData(guesserMsg);
-            }
-        }
-    }
+//    /**
+//     * Starts a new round of the game.
+//     */
+//    private void startNewRound() {
+//        int drawerID = gameLogic.startNewRound();
+//        String word = gameLogic.getCurrentWord();
+//        String hint = gameLogic.getWordHint();
+//
+//        displayMessageToAll("[Server] Round starting! Client " + drawerID + " is drawing\n");
+//
+//        Message drawerMsg = Message.createRoundStartMessage(word, 60);
+//        sockServer[drawerID].sendData(drawerMsg);
+//
+//        for (int i = 1; i <= MAX_CLIENTS; i++) {
+//            if (i != drawerID && sockServer[i] != null && sockServer[i].alive) {
+//                Message guesserMsg = Message.createRoundStartMessage(hint, 60);
+//                sockServer[i].sendData(guesserMsg);
+//            }
+//        }
+//    }
 
     /**
      * Broadcasts message only to drawer and players who already guessed.
@@ -233,11 +244,16 @@ public class ServerController {
     private void startPhase2_WordSelection() {
         broadcastMessage(Message.createClearMessage());
 
-        //rotate to next player as drawer
-        currentDrawerID = gameLogic.startNewRound();
+        // startNewRound() returns {DrawerID, W1, W2, W3}
+        String[] roundInfo = gameLogic.startNewRound();
 
-        //get the words to choose from
-        String[] options = gameLogic.getThreeRandomWords();
+        if(roundInfo == null || roundInfo.length < 4) return; // Error or not enough players
+
+        currentDrawerID = Integer.parseInt(roundInfo[0]); // Get the assigned drawer ID
+
+        // Get the word options array: {W1, W2, W3}
+        String[] options = new String[3];
+        System.arraycopy(roundInfo, 1, options, 0, 3);
 
         // notify the Drawer with options
         if (sockServer[currentDrawerID] != null) {
@@ -532,8 +548,13 @@ public class ServerController {
                 String chosenWord = message.getMessageContents();
 
                 Platform.runLater(()->{
-                    gameLogic.setCurrentWord(chosenWord);
-                    startPhase3_RoundStart();
+                    // IMPORTANT: Use the new validation method. This sets the word and handles drawer rotation.
+                    if (gameLogic.validateAndSetWord(chosenWord)) {
+                        // Start Phase 3 ONLY if the chosen word was valid
+                        startPhase3_RoundStart();
+                    } else {
+                        displayMessage(myConID, "ERROR: Invalid word selection received.\n");
+                    }
                 });
             } else if (messageType.equals(Message.GUESS)) {
                 Message.GuessData guessData = message.parseGuessMessage();
@@ -588,10 +609,11 @@ public class ServerController {
                 String username = message.getMessageContents();
                 gameLogic.addPlayer(myConID, username);
                 displayMessage(myConID, "Player registered: " + username + "\n");
+
                 // Only start a round if no round is currently active
-                if (gameLogic.getPlayerCount() >= 4 && !gameLogic.isRoundActive()) {
-                    startNewRound();
-                } else if (gameLogic.isRoundActive()) {
+                // The new game flow requires the LEADER to send a START_GAME message,
+                // so we only handle players joining mid-round here.
+                if (gameLogic.isRoundActive()) {
                     // Player joined mid-round, send them current round info
                     String word = gameLogic.getWordHint();
                     Message roundMsg = Message.createRoundStartMessage(word, gameLogic.getTimeRemaining());

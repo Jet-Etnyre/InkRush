@@ -36,16 +36,14 @@ public class GameLogic {
     private List<Integer> correctGuessers;
     private int guessCount;
 
-    // word bank
-    private WordBank wordBank;
-
-    // Temporarily holds the 3 word choices for the drawer
-    private String[] currentWordOptions;
+    // Word Bank Dependency
+    private WordBank wordBank; // Dependency Injection
+    private String[] currentWordOptions; // store the 3 choices
 
     /**
      * Creates a new GameLogic instance.
      * Initializes player tracking and game state.
-     * @param wordBank the initialized WordBank instance for fetching words
+     * @param wordBank the initialized WordBank instance for fetching words <-- NEW PARAMETER
      */
     public GameLogic(WordBank wordBank) {
         this.wordBank = wordBank;
@@ -57,8 +55,8 @@ public class GameLogic {
         roundActive = false;
         currentDrawerIndex = 0;
         guessCount = 0;
+        currentWordOptions = null; // Initialize options field
     }
-
     /**
      * Registers a new player in the game.
      * @param clientID the client's unique ID
@@ -80,42 +78,43 @@ public class GameLogic {
     }
 
     /**
-     * Starts a new round with the next drawer.
-     * Selects 3 word options and starts the timer.
+     * Starts a new round flow by selecting the next drawer and retrieving 3 random word options.
      * @return a String array containing {DrawerID, WordOption1, WordOption2, WordOption3}
      * or null if not enough players.
      */
     public String[] startNewRound() {
         if (playerOrder.isEmpty()) {
-            return null; // Return null if not enough players (changed from -1)
+            return null;
         }
 
-        // 1. Select the next drawer
+        // select next drawer (rotates through all players)
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
-        // 2. Get the three word choices from the database
-        // This is where WordBank's logic is utilized
-        currentWordOptions = getThreeRandomWords();
+        // Get the three word choices from the database
+        List<String> chosenList = wordBank.getThreeWords();
+        currentWordOptions = chosenList.toArray(new String[0]);
 
-        // 3. Start timer and round state
+        // NOTE: The currentWord is NOT set here. It is set by the drawer's choice.
+
+        // start timer (Round is active once a word is selected and validated)
         roundStartTime = System.currentTimeMillis();
-        roundActive = true;
+        roundActive = true; // Mark round active to prevent mid-round game starts
 
-        // 4. Reset guess tracking for new round
+        // reset guess tracking for new round
         correctGuessers.clear();
         guessCount = 0;
 
-        // 5. Package and return the necessary information for the server
+        // Package and return the necessary information for the server
         String[] roundInfo = new String[4];
         roundInfo[0] = String.valueOf(currentDrawerID);
         System.arraycopy(currentWordOptions, 0, roundInfo, 1, 3);
 
-        // Example return: {"4", "Giraffe", "Hammer", "Running"}
         return roundInfo;
     }
 
     /**
      * Validates that the chosen word is one of the available options and sets it as the current word.
+     * This method also handles drawer rotation for the NEXT round.
      * @param word the word chosen by the drawer
      * @return true if the word was valid and set, false otherwise.
      */
@@ -129,14 +128,14 @@ public class GameLogic {
             if (option.equalsIgnoreCase(word.trim())) {
                 this.currentWord = word.trim(); // Set the final word
                 this.currentWordOptions = null; // Clear options
-                // Advance drawer index for the NEXT round (this is correct placement)
+
+                // Rotation must happen AFTER the word is chosen for the current round
                 currentDrawerIndex = (currentDrawerIndex + 1) % playerOrder.size();
                 return true;
             }
         }
         return false;
     }
-
     /**
      * Checks if a guess is correct.
      * This is going to be case-insensitive comparison with the current word.
@@ -217,17 +216,14 @@ public class GameLogic {
 
     /**
      * Ends the current round.
-     * Advances to the next drawer in rotation.
      * Clears round state and guess tracking.
+     * NOTE: The drawer index is advanced in validateAndSetWord() *before* the round starts drawing.
      */
     public void endRound() {
         roundActive = false;
         currentWord = null;
         correctGuessers.clear();
         guessCount = 0;
-
-        // move to next drawer (cycles through: 0 -> 1 -> 2 -> ... -> N-1 -> 0)
-        currentDrawerIndex = (currentDrawerIndex + 1) % playerOrder.size();
     }
 
     /**
@@ -310,6 +306,15 @@ public class GameLogic {
             hint.append("_ ");
         }
         return hint.toString().trim();
+    }
+
+    /**
+     * Resets the round timer to the full duration.
+     * Called when the final word is chosen and drawing begins.
+     */
+    public void resetTimer() {
+        // Reset the start time to the current time to restart the 60-second duration
+        roundStartTime = System.currentTimeMillis();
     }
 
     /**
