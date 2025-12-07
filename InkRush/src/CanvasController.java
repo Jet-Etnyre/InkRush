@@ -560,7 +560,6 @@ public class CanvasController {
             displayMessage("You are Client " + clientID + "\n");
 
         } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
-            canDraw = true;
             Platform.runLater(() -> {
                 // Reset label while they choose a word
                 if (wordToGuessLabel != null) {
@@ -616,18 +615,25 @@ public class CanvasController {
 
             // 2. Update the GUI
             Platform.runLater(() -> {
-                if (wordToGuessLabel != null) {
-                    // Check if we are the drawer to style it differently (optional)
-                    if (canDraw) {
-                        wordToGuessLabel.setText(textToDisplay);
-                    } else {
+                // 2. Logic to Lock/Unlock based on what we received
+                if (textToDisplay.contains("_")) {
+                    // Guesser
+                    canDraw = false;
+                    if (wordToGuessLabel != null){
                         wordToGuessLabel.setText(textToDisplay);
                     }
+                    drawingCanvas.setStyle("-fx-cursor: default;");
+                } else {
+                    // Drawer
+                    canDraw = true;
+                    if (wordToGuessLabel != null){
+                        wordToGuessLabel.setText(textToDisplay);
+                    }
+                    drawingCanvas.setStyle("-fx-cursor: crosshair;");
                 }
 
                 if (timerLabel != null) {
                     timerLabel.setText(String.valueOf(duration));
-                    // You can add a Timer task here to count down locally
                 }
             });
 
