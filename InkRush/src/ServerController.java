@@ -219,8 +219,51 @@ public class ServerController {
         });
     }
 
+    /**
+     * Begins phase 2 of the game flow: selecting the drawer and having them choose a word
+     */
     private void startPhase2_WordSelection() {
-        startNewRound();
+        //rotate to next player as drawer
+        currentDrawerID = gameLogic.startNewRound();
+
+        //get the words to choose from
+        String[] options = gameLogic.getThreeRandomWords();
+
+        // notify the Drawer with options
+        if (sockServer[currentDrawerID] != null) {
+            Message optionsMsg = Message.createWordOptionsMessage(options);
+            sockServer[currentDrawerID].sendData(optionsMsg);
+
+            // Also tell them they are the drawer (unlocks their pen)
+            sockServer[currentDrawerID].sendData(Message.createDrawerAssignedMessage());
+        }
+
+        // notify everyone else to wait
+        broadcastExcept(Message.createChatMessage("SERVER", "Waiting for drawer to choose a word..."), currentDrawerID);
+        displayMessageToAll("[Phase 2] Waiting for Client " + currentDrawerID + " to choose a word.\n");
+    }
+
+    /**
+     * Begins phase 3 of the game flow: transitioning rom selecting word to guessing state
+     */
+    private void startPhase3_RoundStart() {
+        String word = gameLogic.getCurrentWord();
+        String hint = gameLogic.getWordHint();
+
+        // 1. Send the ACTUAL WORD to the Drawer
+        // format: ROUND_START:apple:60
+        if (sockServer[currentDrawerID] != null) {
+            Message drawerMsg = Message.createRoundStartMessage(word, 60);
+            sockServer[currentDrawerID].sendData(drawerMsg);
+        }
+
+        // 2. Send the HINT to everyone else
+        // format: ROUND_START:_ _ _ _ _:60
+        Message guesserMsg = Message.createRoundStartMessage(hint, 60);
+        broadcastExcept(guesserMsg, currentDrawerID);
+
+        // 3. Log to Server GUI
+        displayMessageToAll("[Phase 3] Round Started! Word: " + word + "\n");
     }
 
     /* This new Inner Class implements Runnable and objects instantiated from this
@@ -384,6 +427,15 @@ public class ServerController {
 
                     startPhase2_WordSelection();
                 }
+            } else if (messageType.equals(Message.WORD_SELECTED)) {
+                // Only the drawer can select a word
+                if (myConID != currentDrawerID) return;
+
+                String chosenWord = message.getMessageContents();
+                gameLogic.setCurrentWord(chosenWord);
+
+                // Trigger Phase 3
+                startPhase3_RoundStart();
             } else if (messageType.equals(Message.GUESS)) {
                 Message.GuessData guessData = message.parseGuessMessage();
                 String username = guessData.getUsername();

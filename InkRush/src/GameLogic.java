@@ -246,6 +246,31 @@ public class GameLogic {
     }
 
     /**
+     * Pulls 3 unique words form the word bank
+     * @return String[] containing 3 words
+     */
+    public String[] getThreeRandomWords() {
+        // Safety check if bank is small
+        if (wordBank.length < 3) return new String[]{"Cat", "Dog", "Bird"};
+
+        List<String> chosen = new ArrayList<>();
+        while (chosen.size() < 3) {
+            String w = wordBank[random.nextInt(wordBank.length)];
+            if (!chosen.contains(w)) {
+                chosen.add(w);
+            }
+        }
+        return chosen.toArray(new String[0]);
+    }
+
+    /**
+     * Sets the current word (called when drawer chooses)
+     */
+    public void setCurrentWord(String word){
+        this.currentWord = word;
+    }
+
+    /**
      * Gets the current word being drawn
      * @return the current word
      */

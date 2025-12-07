@@ -21,6 +21,8 @@ public class Message implements Serializable {
     public static final String DRAWER_ASSIGNED = "DRAWER_ASSIGNED";
     public static final String START_GAME = "START_GAME";
     public static final String LEADER = "LEADER";
+    public static final String WORD_OPTIONS = "WORD_OPTIONS";
+    public static final String WORD_SELECTED = "WORD_SELECTED";
 
     public static final String USERNAME = "USERNAME";
 
@@ -223,6 +225,24 @@ public class Message implements Serializable {
      */
     public static Message createChatMessage(String username, String chatMessage) {
         return new Message(CHAT, username + ":" + chatMessage);
+    }
+
+    /**
+     * Creates a WORD_OPTIONS message
+     * @param words String[] of words to choose from
+     * @return message object
+     */
+    public static Message createWordOptionsMessage(String[] words){
+        return new Message(WORD_OPTIONS, String.join(",", words));
+    }
+
+    /**
+     * Creates a WORD_SELECTED message
+     * @param word selected word
+     * @return Message object
+     */
+    public static Message createWordSelectedMessage(String word) {
+        return new Message(WORD_SELECTED, word);
     }
 
     /**

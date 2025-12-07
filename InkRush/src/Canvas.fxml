@@ -71,12 +71,15 @@
         </rowConstraints>
 
         <children>
-            <HBox>
+            <HBox alignment="CENTER">
                 <children>
-                    <Label text="Word to Draw">
+                    <Label text="Word:">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
-                    <Label fx:id="wordToGuessLabel" />
+                    <Label fx:id="wordToGuessLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="195.0">
+                  <font>
+                     <Font name="System Bold Italic" size="18.0" />
+                  </font></Label>
                 </children>
             </HBox>
         </children>
