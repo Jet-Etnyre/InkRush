@@ -4,47 +4,69 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_CENTER" spacing="18" style="-fx-background-image: url('InkRush.png'); -fx-background-size: 100% 100%; -fx-background-position: center center; -fx-background-repeat: no-repeat;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="LobbyController">
+<VBox prefHeight="600.0" prefWidth="700.0" alignment="TOP_CENTER" style="-fx-background-image: url('InkRush.png'); -fx-background-size: cover; -fx-background-position: center center; -fx-background-repeat: no-repeat;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="LobbyController">
 
-    <Label text="Lobby" VBox.vgrow="ALWAYS">
-        <font>
-            <Font size="24" />
-        </font>
-    </Label>
+    <StackPane VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets left="20.0" right="20.0" top="20.0" />
+        </padding>
 
-    <GridPane hgap="10" vgap="10" VBox.vgrow="ALWAYS">
-        <children>
-            <Label text="Server IP:" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS" />
-            <TextField fx:id="ipAddressField" prefWidth="250" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS" />
+        <Label text="Lobby" StackPane.alignment="TOP_CENTER">
+            <font>
+                <Font name="System Bold" size="36.0" />
+            </font>
+        </Label>
 
-            <Label text="Player Name:" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS" />
-            <TextField fx:id="playerNameField" prefWidth="250" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS" />
+        <VBox maxHeight="-Infinity" maxWidth="-Infinity" spacing="5.0" StackPane.alignment="TOP_LEFT">
+            <Label text="Server IP:">
+                <font>
+                    <Font size="14.0" />
+                </font>
+            </Label>
 
-            <Button fx:id="joinButton" onAction="#onJoinClicked" prefWidth="130" text="Join Game" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS" />
-        </children>
-      <columnConstraints>
-         <ColumnConstraints />
-         <ColumnConstraints />
-      </columnConstraints>
-      <rowConstraints>
-         <RowConstraints />
-         <RowConstraints />
-         <RowConstraints />
-      </rowConstraints>
-    </GridPane>
+            <TextField fx:id="ipAddressField" maxWidth="200.0" promptText="Enter IP Address">
+                <font>
+                    <Font size="12.0" />
+                </font>
+                <VBox.margin>
+                    <Insets bottom="10.0" />
+                </VBox.margin>
+            </TextField>
 
-    <ImageView fx:id="logoImageView" fitHeight="200" fitWidth="400" pickOnBounds="true" preserveRatio="true" VBox.vgrow="ALWAYS">
+            <Label text="Player Name:">
+                <font>
+                    <Font size="14.0" />
+                </font>
+            </Label>
+
+            <TextField fx:id="playerNameField" maxWidth="200.0" promptText="Enter Name">
+                <font>
+                    <Font size="12.0" />
+                </font>
+            </TextField>
+        </VBox>
+
+        <Button fx:id="joinButton" onAction="#onJoinClicked" prefHeight="40.0" prefWidth="120.0" text="Join Game" StackPane.alignment="TOP_RIGHT">
+            <font>
+                <Font name="System Bold" size="14.0" />
+            </font>
+            <StackPane.margin>
+                <Insets top="30.0" />
+            </StackPane.margin>
+        </Button>
+
+    </StackPane>
+
+    <ImageView fx:id="logoImageView" fitHeight="200.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true">
         <VBox.margin>
-            <Insets top="20" />
+            <Insets bottom="20.0" top="20.0" />
         </VBox.margin>
     </ImageView>
-
 
 </VBox>
