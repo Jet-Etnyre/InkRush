@@ -8,6 +8,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.scene.media.AudioClip; // Import for sound effects
+import javafx.scene.media.Media;     // Import for music
+import javafx.scene.media.MediaPlayer; // Import for music player
 
 import java.io.IOException;
 
