@@ -3,7 +3,7 @@ import java.io.Serializable;
 /**
  * This class represents a message in the game.
  * Messages are passed between client and server with different types.
- * Supported message types include CONNECTED, CHAT, DRAW, GUESS, CLEAR, ROUND_START, ROUND_END, TERMINATE, DRAWER_ASSIGNED
+ * Supported message types include CONNECTED, CHAT, DRAW, GUESS, CLEAR, ROUND_START, ROUND_END, TERMINATE, DRAWER_ASSIGNED, USERNAME
  */
 public class Message implements Serializable {
 
@@ -19,6 +19,8 @@ public class Message implements Serializable {
     public static final String ROUND_END = "ROUND_END";
     public static final String TERMINATE = "TERMINATE";
     public static final String DRAWER_ASSIGNED = "DRAWER_ASSIGNED";
+
+    public static final String USERNAME = "USERNAME";
 
     private String messageType;
     private String messageContents;
@@ -263,6 +265,15 @@ public class Message implements Serializable {
      */
     public static Message createDrawerAssignedMessage(){
         return new Message(DRAWER_ASSIGNED, "");
+    }
+
+    /**
+     * Creates a USERNAME message.
+     * @param username the username
+     * @return Message object
+     */
+    public static Message createUsernameMessage(String username) {
+        return new Message(USERNAME, username);
     }
 
     /**

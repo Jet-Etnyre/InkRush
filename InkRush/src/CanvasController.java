@@ -40,14 +40,21 @@ import javafx.application.Platform;
  * - Handles UnknownHostException for invalid IP addresses.
  */
 public class CanvasController {
-    @FXML private Button chatButton;
-    @FXML private TextArea chatTextArea;
-    @FXML private TextField chatTextInput;
-    @FXML private Button clearButton;
-    @FXML private Canvas drawingCanvas;
+    @FXML
+    private Button chatButton;
+    @FXML
+    private TextArea chatTextArea;
+    @FXML
+    private TextField chatTextInput;
+    @FXML
+    private Button clearButton;
+    @FXML
+    private Canvas drawingCanvas;
 
-    @FXML private Label nameLabel; // Matches teammate's file
-    @FXML private Label wordLabel;
+    @FXML
+    private Label nameLabel; // Matches teammate's file
+    @FXML
+    private Label wordLabel;
 
     // NEW FXML controls (must match your FXML fx:id names)
     @FXML private ColorPicker colorPicker;
@@ -80,8 +87,9 @@ public class CanvasController {
     /**
      * Sets the connection information (Name and IP) from the Lobby.
      * Automatically triggers the connection attempt.
+     *
      * @param name The player's username
-     * @param ip The IP address to connect to
+     * @param ip   The IP address to connect to
      */
     public void setConnectionInfo(String name, String ip) {
         this.username = name;
@@ -226,6 +234,7 @@ public class CanvasController {
         remoteLastX = 0;
         remoteLastY = 0;
 
+        // If connected, tell server to clear canvas for all players
         if (connected) {
             Message clearMessage = Message.createClearMessage(); // Make sure your Message class has this
             sendToServer(clearMessage);
@@ -266,6 +275,10 @@ public class CanvasController {
 
                     connected = true;
                     displayMessage("SUCCESS: Connected to " + serverIP + "\n");
+
+                    Message usernameMsg = Message.createUsernameMessage(username);
+                    sendToServer(usernameMsg);
+
                     displayMessage("Welcome, " + username + "!\n");
 
                     // Start listening for messages from server
@@ -306,7 +319,7 @@ public class CanvasController {
                 connection.close();
             }
         } catch (IOException e) {
-            // Ignored
+            // Ignored because we are already handling an error
         }
     }
 
@@ -350,6 +363,7 @@ public class CanvasController {
 
                 // Handle different message types
                 handleServerMessage(message);
+
             } catch (IOException ioException) {
                 if (connected) {
                     displayMessage("Lost connection to server\n");
@@ -433,7 +447,7 @@ public class CanvasController {
 
             //If distance is too large (pen lifted) or first point, draw a dot
             //Threshold of 9 pixels
-            if(remoteFirstPoint || distance > 9) {
+            if (remoteFirstPoint || distance > 9) {
                 //First point - just draw a dot
                 gc.fillOval(x - drawData.getSize() / 2, y - drawData.getSize() / 2,
                         drawData.getSize(), drawData.getSize());
@@ -458,7 +472,7 @@ public class CanvasController {
             displayMessage("Not connected to server!\n");
             return;
         }
-        Message chatMessage = Message.createChatMessage(username, message);
+        Message chatMessage = Message.createGuessMessage(username, message);
         sendToServer(chatMessage);
         chatTextInput.clear();
     }
