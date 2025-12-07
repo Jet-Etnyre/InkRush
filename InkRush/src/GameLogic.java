@@ -22,7 +22,6 @@ public class GameLogic {
     private int currentDrawerID;
     private long roundStartTime;
     private boolean roundActive;
-    private Random random;
 
     // player tracking
     private Map<Integer, PlayerInfo> players;
@@ -48,7 +47,6 @@ public class GameLogic {
         players = new HashMap<>();
         playerOrder = new ArrayList<>();
         correctGuessers = new ArrayList<>();
-        random = new Random();
         roundActive = false;
         currentDrawerIndex = 0;
         guessCount = 0;
@@ -150,7 +148,7 @@ public class GameLogic {
      * Checks if a guess is correct.
      * This is going to be case-insensitive comparison with the current word.
      * @param guess the player's guess
-     * @return true if gues matches current word, false otherwise
+     * @return true if guess matches current word, false otherwise
      */
     public boolean checkGuess(String guess) {
         if (!roundActive || currentWord == null) {
