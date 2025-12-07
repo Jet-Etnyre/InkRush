@@ -7,7 +7,6 @@ import java.util.Random;
 /**
  * GameLogic class manages the core game mechanics for the game.
  * Handles word selection, guess validation, scoring, rounds, and timing.
- *
  * The way the Game Flow works is as follows:
  * 1- Round starts and drawer gets selected as well as word getting chosen
  * 2- Timer starts tracking round duration
@@ -18,8 +17,6 @@ import java.util.Random;
  */
 public class GameLogic {
     private static final int ROUND_DURATION_SECONDS = 60;
-    //private static final int[] GUESS_POINTS = {200, 150, 100, 50}; // the 1st, 2nd, 3rd, and 4th guesser
-    //private static final int POINTS_DRAWER_BONUS = 50; // drawer gets points when someone guesses
 
     private String currentWord;
     private int currentDrawerID;
@@ -70,7 +67,7 @@ public class GameLogic {
 
     /**
      * Removes a player from the game
-     * @param clientID the clident ID to remove
+     * @param clientID the client ID to remove
      */
     public void removePlayer(int clientID) {
         players.remove(clientID);
@@ -269,26 +266,6 @@ public class GameLogic {
      */
     public boolean  isTimeUp() {
         return roundActive && getTimeRemaining() <= 0;
-    }
-
-    /**
-     * Pulls 3 unique words from the WordBank (database) based on
-     * the game's logic (3 random categories, 1 word from each).
-     * @return String[] containing 3 words
-     */
-    public String[] getThreeRandomWords() {
-        // Delegate word fetching to the WordBank
-        List<String> chosenList = wordBank.getThreeWords();
-
-        // Convert List back to String array
-        return chosenList.toArray(new String[0]);
-    }
-
-    /**
-     * Sets the current word (called when drawer chooses)
-     */
-    public void setCurrentWord(String word){
-        this.currentWord = word;
     }
 
     /**
