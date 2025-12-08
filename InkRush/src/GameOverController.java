@@ -140,14 +140,17 @@ public class GameOverController {
      */
     public void setLeaderboardData(String leaderboardData) {
         try {
+            // Format: "Name1:Score1:Name2:Score2:Name3:Score3"
             String[] parts = leaderboardData.split(":");
 
+            // Winner (1st place)
             if (parts.length >= 2) {
                 winnerLabel.setText("🏆 WINNER: " + parts[0] + " 🏆");
                 place1Name.setText(parts[0]);
                 place1Score.setText(parts[1] + " pts");
             }
 
+            // 2nd place
             if (parts.length >= 4) {
                 place2Name.setText(parts[2]);
                 place2Score.setText(parts[3] + " pts");
@@ -156,6 +159,7 @@ public class GameOverController {
                 place2Score.setText("---");
             }
 
+            // 3rd place
             if (parts.length >= 6) {
                 place3Name.setText(parts[4]);
                 place3Score.setText(parts[5] + " pts");
@@ -166,6 +170,7 @@ public class GameOverController {
 
         } catch (Exception e) {
             System.err.println("[ERROR] Failed to parse leaderboard: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -176,7 +181,7 @@ public class GameOverController {
         new Thread(() -> {
             while (countdown > 0) {
                 final int current = countdown;
-                Platform.runLater(() -> countdownLabel.setText("Closing in " + current + " seconds..."));
+                Platform.runLater(() -> countdownLabel.setText("Returning to game in " + current + " seconds..."));
 
                 try {
                     Thread.sleep(1000);
@@ -199,20 +204,35 @@ public class GameOverController {
         System.out.println("[GAME] Restart clicked!");
         // TODO: Send RESTART message to server
 
-        Stage stage = (Stage) restartButton.getScene().getWindow();
-        stage.close();
+        Platform.runLater(() -> {
+            Stage stage = (Stage) restartButton.getScene().getWindow();
+            stage.close();
+        });
     }
 
     @FXML
     private void onCloseClicked() {
-        closeGame();
-    }
+        if (confettiTimer != null) {
+            confettiTimer.stop();
+        }
+
+        Platform.runLater(() -> {
+            Stage stage = (Stage) closeButton.getScene().getWindow();
+            stage.close();
+
+            // Exit the entire application
+            Platform.exit();
+            System.exit(0);
+        });    }
 
     private void closeGame() {
-        if (confettiTimer != null) confettiTimer.stop();
+        if (confettiTimer != null) {
+            confettiTimer.stop();
+        }
 
-        Stage stage = (Stage) closeButton.getScene().getWindow();
-        stage.close();
-        System.exit(0);
+        Platform.runLater(() -> {
+            Stage stage = (Stage) closeButton.getScene().getWindow();
+            stage.close();
+        });
     }
 }

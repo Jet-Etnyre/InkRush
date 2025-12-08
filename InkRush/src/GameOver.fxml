@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GameOverController">
+<StackPane prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GameOverController">
 
     <!-- Confetti Canvas (behind everything) -->
     <javafx.scene.canvas.Canvas fx:id="confettiCanvas" height="600.0" width="500.0" />
@@ -154,7 +155,7 @@
                 </Button>
 
                 <!-- Close Button (Blue) -->
-                <Button fx:id="closeButton" onAction="#onCloseClicked" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: #1E90FF; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-color: #722b2b; -fx-border-width: 3; -fx-border-radius: 10;" text="Close Game">
+                <Button fx:id="closeButton" onAction="#onCloseClicked" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: #1E90FF; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-color: #722b2b; -fx-border-width: 3; -fx-border-radius: 10;" text="Close">
                     <font>
                         <Font name="Goudy Stout" size="14.0" />
                     </font>

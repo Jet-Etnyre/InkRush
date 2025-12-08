@@ -26,6 +26,7 @@ public class Message implements Serializable {
     public static final String LEADERBOARD = "LEADERBOARD";
     public static final String SCORE = "SCORE";
     public static final String ROUND_UPDATE = "ROUND_UPDATE";
+    public static final String GAME_OVER = "GAME_OVER";
 
     public static final String USERNAME = "USERNAME";
 
@@ -251,6 +252,15 @@ public class Message implements Serializable {
      */
     public static Message createRoundUpdateMessage(int currentRound) {
         return new Message(ROUND_UPDATE, String.valueOf(currentRound));
+    }
+
+    /**
+     * Creates a GAME_OVER message
+     * @param leaderboardData info for leaderboard
+     * @return message object
+     */
+    public static Message createGameOverMessage(String leaderboardData) {
+        return new Message(GAME_OVER, leaderboardData);
     }
 
     /**
