@@ -93,40 +93,87 @@ public class WordBank {
         return null;
     }
 
+    //Old world selection method, gets three words, each from a different category
+//    /**
+//     * Generates a list of 3 random words for a game round.
+//     * Logic:
+//     * 1. Retrieves all unique categories from the database.
+//     * 2. Shuffles them and picks the top 3.
+//     * 3. Selects one random word from each of those 3 categories.
+//     *
+//     * @return A List of 3 distinct strings (e.g., ["Lion", "Toaster", "Running"]).
+//     */
+//    // Change signature to accept excluded words list
+//    public List<String> getThreeWords(List<String> excludedWords) {
+//        List<String> resultWords = new ArrayList<>();
+//        List<String> categories = getAllCategories();
+//
+//        if (categories.size() < 3) return resultWords;
+//
+//        Collections.shuffle(categories);
+//        List<String> selectedCategories = categories.subList(0, 3);
+//
+//        for (String category : selectedCategories) {
+//            // Use the new exclusion-aware method
+//            String word = getRandomWordFromCategoryAssumingExclusions(category, excludedWords);
+//
+//            // Fallback: If we ran out of unique words in that category, just get any random one
+//            if (word == null) {
+//                word = getRandomWordFromCategory(category);
+//            }
+//
+//            if (word != null) {
+//                resultWords.add(word);
+//            }
+//        }
+//        return resultWords;
+//    }
+
     /**
      * Generates a list of 3 random words for a game round.
-     * <p>
-     * Logic:
-     * 1. Retrieves all unique categories from the database.
-     * 2. Shuffles them and picks the top 3.
-     * 3. Selects one random word from each of those 3 categories.
-     * </p>
-     *
-     * @return A List of 3 distinct strings (e.g., ["Lion", "Toaster", "Running"]).
+     * Updated to select from the GLOBAL pool of words to maximize variety.
      */
-    // Change signature to accept excluded words list
     public List<String> getThreeWords(List<String> excludedWords) {
         List<String> resultWords = new ArrayList<>();
-        List<String> categories = getAllCategories();
 
-        if (categories.size() < 3) return resultWords;
+        // 1. Build a query to select 3 random words from the WHOLE table
+        //    that are NOT in the excluded list.
+        StringBuilder sql = new StringBuilder("SELECT text FROM Words");
 
-        Collections.shuffle(categories);
-        List<String> selectedCategories = categories.subList(0, 3);
-
-        for (String category : selectedCategories) {
-            // Use the new exclusion-aware method
-            String word = getRandomWordFromCategoryAssumingExclusions(category, excludedWords);
-
-            // Fallback: If we ran out of unique words in that category, just get any random one
-            if (word == null) {
-                word = getRandomWordFromCategory(category);
+        // Add WHERE clause only if we have exclusions
+        if (excludedWords != null && !excludedWords.isEmpty()) {
+            sql.append(" WHERE text NOT IN (");
+            for (int i = 0; i < excludedWords.size(); i++) {
+                // formatting: ?, ?, ?
+                sql.append(i == 0 ? "?" : ", ?");
             }
-
-            if (word != null) {
-                resultWords.add(word);
-            }
+            sql.append(")");
         }
+
+        // H2 Database specific syntax for random ordering
+        sql.append(" ORDER BY RAND() LIMIT 3");
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            // 2. Bind the excluded words to the '?' placeholders
+            int paramIndex = 1;
+            if (excludedWords != null) {
+                for (String ex : excludedWords) {
+                    pstmt.setString(paramIndex++, ex);
+                }
+            }
+
+            // 3. Execute and collect results
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    resultWords.add(rs.getString("text"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return resultWords;
     }
 
@@ -229,7 +276,6 @@ public class WordBank {
      * <p>
      * Uses {@code getResourceAsStream} to ensure the file can be read even when
      * the application is packaged as a JAR file.
-     * </p>
      *
      * @param filename The name of the file to read (e.g., "words.txt").
      */
