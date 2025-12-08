@@ -416,6 +416,44 @@ public class CanvasController {
         }
     }
 
+    @FXML
+    private void onEraserClicked() {
+        // 1. Switch color to White (Background color)
+        currentColor = Color.WHITE;
+
+        // 2. Set Slider to Maximum (20) for big eraser
+        if (sizeSlider != null) {
+            sizeSlider.setValue(sizeSlider.getMax());
+            currentBrushSize = sizeSlider.getMax();
+        }
+
+        // Optional: Update the label manually since the slider listener might lag slightly
+        if (sizeValueLabel != null) {
+            sizeValueLabel.setText("Brush: " + (int)currentBrushSize + "px");
+        }
+    }
+
+    @FXML
+    private void onDrawClicked() {
+        // Switch back to Black (or whatever is in the ColorPicker)
+        if (colorPicker != null) {
+            currentColor = colorPicker.getValue(); // Use selected color
+            // Or force black: currentColor = Color.BLACK;
+        } else {
+            currentColor = Color.BLACK;
+        }
+
+        // Reset Slider to a normal drawing size (e.g., 4)
+        if (sizeSlider != null) {
+            sizeSlider.setValue(4);
+            currentBrushSize = 4;
+        }
+
+        if (sizeValueLabel != null) {
+            sizeValueLabel.setText("Brush: 4px");
+        }
+    }
+
     /**
      * Converts a JavaFX Color to #RRGGBB hex string.
      */
