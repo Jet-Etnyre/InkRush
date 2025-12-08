@@ -627,7 +627,10 @@ public class CanvasController {
             displayMessage("You are Client " + clientID + "\n");
 
         } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
-            Platform.runLater(() -> {
+            Platform.runLater(() ->
+            {
+                // This makes sure if they were erasing last turn, they start this turn with a black pen
+                onDrawClicked();
                 timerLabel.setText("60");
 
                 // Reset label while they choose a word
