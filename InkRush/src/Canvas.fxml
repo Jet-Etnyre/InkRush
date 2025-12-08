@@ -8,8 +8,13 @@
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -19,7 +24,6 @@
         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
     </padding>
 
-    <!-- Title Row -->
     <HBox alignment="CENTER_LEFT" prefWidth="690.0" spacing="20">
         <children>
             <Label prefHeight="39.0" prefWidth="140.0" style="-fx-font-weight: 900; -fx-font-size: 32px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 3, 0, 2, 2);" text="InkRush" textFill="#FFFFFF">
@@ -62,26 +66,43 @@
         </children>
     </HBox>
 
-    <HBox alignment="CENTER_LEFT" prefWidth="690.0" spacing="20">
+    <GridPane alignment="CENTER" prefWidth="690.0">
+        <columnConstraints>
+            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" percentWidth="51.0" />
+            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" percentWidth="26.0" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" percentWidth="23.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="SOMETIMES" />
+        </rowConstraints>
+
         <children>
-            <Label text="Word to Draw:" textFill="#FFFFFF">
-                <font><Font name="Lao MN Bold" size="18.0" /></font>
-            </Label>
-            <Label fx:id="wordToGuessLabel" textFill="#FFFFFF">
-                <font>
-                    <Font name="Lao MN Bold" size="18.0" />
-                </font>
-            </Label>
+            <HBox alignment="CENTER_LEFT" spacing="10" GridPane.columnIndex="0">
+                <children>
+                    <Label text="Word to Draw:" textFill="#FFFFFF">
+                        <font><Font name="Lao MN Bold" size="18.0" /></font>
+                    </Label>
+                    <Label fx:id="wordToGuessLabel" textFill="#FFFFFF">
+                        <font>
+                            <Font name="Lao MN Bold" size="18.0" />
+                        </font>
+                    </Label>
+                </children>
+            </HBox>
 
-            <Region HBox.hgrow="ALWAYS" />
+            <ImageView fitHeight="60.0" fitWidth="60.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1">
+                <image>
+                    <Image url="@Inkert.png" />
+                </image>
+            </ImageView>
 
-            <Label fx:id="roundLabel" text="Round: /5" textFill="#FFFFFF">
+            <Label fx:id="roundLabel" text="Round: /5" textFill="#FFFFFF" GridPane.columnIndex="2">
                 <font>
                     <Font name="Lao MN Bold" size="18.0" />
                 </font>
             </Label>
         </children>
-    </HBox>
+    </GridPane>
 
     <HBox alignment="CENTER" prefWidth="690.0" spacing="20" VBox.vgrow="ALWAYS">
         <children>

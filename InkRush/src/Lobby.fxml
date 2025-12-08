@@ -9,7 +9,10 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.Image?>
 
+
+<?import javafx.scene.layout.HBox?>
 <VBox alignment="TOP_CENTER" prefHeight="600.0" prefWidth="700.0" style="-fx-background-image: url('InkRush.png'); -fx-background-size: cover; -fx-background-position: center center; -fx-background-repeat: no-repeat;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="LobbyController">
 
     <StackPane VBox.vgrow="ALWAYS">
@@ -87,4 +90,16 @@
         </VBox.margin>
     </ImageView>
 
+    <HBox alignment="BOTTOM_RIGHT" prefWidth="200.0">
+        <padding>
+            <Insets bottom="10.0" right="10.0" />
+        </padding>
+        <children>
+            <ImageView fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+                    <Image url="@Inkert.png" />
+                </image>
+            </ImageView>
+        </children>
+    </HBox>
 </VBox>
