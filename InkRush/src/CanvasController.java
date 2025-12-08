@@ -9,6 +9,12 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane; // Or whatever root your FXML uses
+import javafx.stage.Modality;
+import javafx.scene.paint.Color; // If needed for transparent style
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -30,6 +36,8 @@ import javafx.animation.AnimationTimer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javafx.scene.image.Image;
+
+
 
 /**
  * Controller for the InkRush game client.
@@ -268,6 +276,7 @@ public class CanvasController {
             // Draw locally
             gc.setLineWidth(currentBrushSize);
             gc.setStroke(currentColor);
+            gc.strokeLine(lastX, lastY, lastX, lastY);
         });
 
         drawingCanvas.setOnMouseDragged(event -> {
@@ -617,7 +626,10 @@ public class CanvasController {
             displayMessage("You are Client " + clientID + "\n");
 
         } else if (messageType.equals(Message.DRAWER_ASSIGNED)) {
-            Platform.runLater(() -> {
+            Platform.runLater(() ->
+            {
+                // This makes sure if they were erasing last turn, they start this turn with a black pen
+                onDrawClicked();
                 timerLabel.setText("60");
 
                 // Reset label while they choose a word
@@ -696,10 +708,11 @@ public class CanvasController {
 
         } else if (messageType.equals(Message.ROUND_UPDATE)) {
             int round = message.parseRoundUpdateMessage();
-            Platform.runLater(this::stopRoundTimer);
-            canDraw = false;
 
             Platform.runLater(() -> {
+                stopRoundTimer();
+                canDraw = false;
+
                 // 1. Reset the cursor
                 drawingCanvas.setStyle("-fx-cursor: default;");
 
@@ -720,13 +733,28 @@ public class CanvasController {
                 if (timerLabel != null) {
                     timerLabel.setText("60");
                 }
+
+                // Hide word option buttons if they're visible
+                if (WordOption1 != null) {
+                    WordOption1.setVisible(false);
+                    WordOption2.setVisible(false);
+                    WordOption3.setVisible(false);
+                }
             });
         } else if (messageType.equals(Message.LEADERBOARD)) {
-            // Format: "Name1,Score1,Name2,Score2..."
-            String[] parts = message.getMessageContents().split(",");
+            String leaderboardData = message.getMessageContents();
 
             Platform.runLater(() -> {
-                updateLeaderboardLabels(parts);
+                if (leaderboardData == null || leaderboardData.isEmpty()) {
+                    // Clear leaderboard
+                    Label[] labels = {leaderboardSpot1, leaderboardSpot2, leaderboardSpot3, leaderboardSpot4, leaderboardSpot5};
+                    for (Label l : labels) {
+                        if (l != null) l.setText("");
+                    }
+                } else {
+                    String[] parts = leaderboardData.split(",");
+                    updateLeaderboardLabels(parts);
+                }
             });
         } else if (messageType.equals(Message.LEADER)) {
             Platform.runLater(() -> {
@@ -745,13 +773,38 @@ public class CanvasController {
             });
             displayMessage("[Canvas cleared]\n");
 
-        }
-        else if (messageType.equals(Message.SCORE)) {
+        } else if (messageType.equals(Message.GAME_OVER)) {
+            String leaderboardData = message.getMessageContents();
+
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("GameOver.fxml"));
+
+                    Stage gameOverStage = new Stage();
+                    gameOverStage.setScene(new Scene(loader.load()));
+                    gameOverStage.setTitle("Game Over");
+
+                    gameOverStage.initModality(Modality.APPLICATION_MODAL);
+                    gameOverStage.initStyle(StageStyle.UNDECORATED);
+
+                    GameOverController controller = loader.getController();
+                    controller.setLeaderboardData(leaderboardData);
+                    controller.startCountdown();
+
+                    gameOverStage.showAndWait();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    displayMessage("[System] Error loading Game Over screen.\n");
+                }
+            });
+
+        } else if (messageType.equals(Message.SCORE)) {
             int newScore = message.parseScoreMessage();
 
             Platform.runLater(() -> {
                 if (scoreLabel != null) {
-                    scoreLabel.setText("" + newScore);
+                    scoreLabel.setText(String.valueOf(newScore));
                 }
             });
         }

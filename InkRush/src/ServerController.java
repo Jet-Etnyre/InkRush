@@ -4,6 +4,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -375,16 +376,26 @@ public class ServerController {
      * Announces the winner and then calls method to transition to phase 1
      */
     private void handleGameOver() {
-        String winnerText = gameLogic.getWinnerDescription();
+        displayMessageToAll("[Server] Game Over! Calculating final scores...\n");
 
-        // 1. Announce Winner
-        Message winMsg = Message.createChatMessage("SERVER", "GAME OVER! Winner: " + winnerText);
-        broadcastMessage(winMsg);
+        // Stop the game loop if running
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
 
-        displayMessageToAll("[Server] Game Complete. Winner: " + winnerText + "\n");
+        StringBuilder sb = new StringBuilder();
+        List<GameLogic.PlayerInfo> leaders = gameLogic.getLeaderboard();
 
-        // 2. Wait 6 seconds, then Reset to Lobby (phase 1)
-        PauseTransition gameOverDelay = new PauseTransition(Duration.seconds(6));
+        for (GameLogic.PlayerInfo p : leaders) {
+            if (sb.length() > 0) sb.append(":");
+            sb.append(p.getUsername()).append(":").append(p.getScore());
+        }
+        String finalLeaderboardData = sb.toString();
+
+        broadcastMessage(Message.createGameOverMessage(finalLeaderboardData));
+        displayMessageToAll("[Server] Game Over message sent. Data: " + finalLeaderboardData + "\n");
+
+        PauseTransition gameOverDelay = new PauseTransition(Duration.seconds(10));
         gameOverDelay.setOnFinished(event -> {
             resetGameToLobby();
         });
@@ -401,12 +412,13 @@ public class ServerController {
         gameStarted = false;
         currentDrawerID = -1;
 
+        displayMessageToAll("[Server] Resetting to lobby...\n");
+
         // 2. Clear Clients
         broadcastMessage(Message.createClearMessage());
         broadcastMessage(Message.createChatMessage("SERVER", "Lobby has been reset. Waiting for leader..."));
 
-        // 3. Reset Round Label on clients (Set to 0) and leaderboard
-        broadcastMessage(Message.createRoundUpdateMessage(0));
+        // 3. Reset Scores to 0 for all clients
         for (int i = 1; i <= MAX_CLIENTS; i++) {
             if (sockServer[i] != null && sockServer[i].alive) {
                 sockServer[i].sendData(Message.createScoreMessage(0));
@@ -421,6 +433,8 @@ public class ServerController {
                 displayMessage(leaderID, "You can start a new game now.\n");
             }
         }
+
+        displayMessageToAll("[Server] Lobby reset complete. Waiting for leader to start new game.\n");
     }
 
     /**
