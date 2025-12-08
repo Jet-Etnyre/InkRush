@@ -24,9 +24,9 @@
         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
     </padding>
 
-    <HBox alignment="CENTER_LEFT" prefWidth="690.0" spacing="20">
+    <HBox alignment="CENTER_LEFT" prefWidth="690.0" spacing="10">
         <children>
-            <Label prefHeight="39.0" prefWidth="140.0" style="-fx-font-weight: 900; -fx-font-size: 32px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 3, 0, 2, 2);" text="InkRush" textFill="#FFFFFF">
+            <Label minWidth="140.0" prefHeight="39.0" prefWidth="140.0" style="-fx-font-weight: 900; -fx-font-size: 32px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 3, 0, 2, 2);" text="InkRush" textFill="#FFFFFF">
                 <font>
                     <Font name="Impact" size="32.0" />
                 </font>
@@ -39,7 +39,8 @@
                     <Font name="Lao MN Bold" size="18.0" />
                 </font>
             </Label>
-            <Label fx:id="nameLabel" textFill="#FFD700">
+
+            <Label fx:id="nameLabel" wrapText="true" maxWidth="110.0" prefWidth="110.0" minHeight="-Infinity" textFill="#FFD700">
                 <font>
                     <Font name="System Bold" size="16.0" />
                 </font>
@@ -51,7 +52,7 @@
                 </font>
             </Button>
 
-            <Label fx:id="timerLabel" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: rgba(0,0,0,0.15); -fx-padding: 8 15 8 15; -fx-background-radius: 3;" text="60" textFill="#FFFFFF" />
+            <Label fx:id="timerLabel" minWidth="40.0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: rgba(0,0,0,0.15); -fx-padding: 8 15 8 15; -fx-background-radius: 3;" text="60" textFill="#FFFFFF" />
 
             <Label text="Score:" textFill="#FFFFFF">
                 <font>
