@@ -11,7 +11,6 @@ import java.util.List;
  * 2. Initializes the database table structure if it doesn't exist.
  * 3. Populates the database with initial words from a resource file (words.txt).
  * 4. Provides game logic to retrieve random words from distinct categories.
-
  */
 public class WordBank {
 
@@ -49,7 +48,6 @@ public class WordBank {
         }
     }
 
-    // --- GAME LOGIC ---
 
     /**
      * Gets a random word from a category, excluding a specific list of words.
@@ -95,12 +93,10 @@ public class WordBank {
 
     /**
      * Generates a list of 3 random words for a game round.
-     * <p>
      * Logic:
      * 1. Retrieves all unique categories from the database.
      * 2. Shuffles them and picks the top 3.
      * 3. Selects one random word from each of those 3 categories.
-     * </p>
      *
      * @return A List of 3 distinct strings (e.g., ["Lion", "Toaster", "Running"]).
      */
@@ -226,10 +222,8 @@ public class WordBank {
 
     /**
      * Reads words from a text file inside the 'resources' folder and inserts them into the database.
-     * <p>
      * Uses {@code getResourceAsStream} to ensure the file can be read even when
      * the application is packaged as a JAR file.
-     * </p>
      *
      * @param filename The name of the file to read (e.g., "words.txt").
      */
