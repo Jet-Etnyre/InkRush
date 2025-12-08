@@ -25,7 +25,6 @@ import javafx.util.Duration;
  * Controller for InkRush game Server.
  * Manages up to 5 client connections with dedicated display areas for each client to show incoming game states.
  * Uses executor service for multithreaded client handling with JavaFX Task patter.
- * <p>
  * All GUI update are handled through the JavaFX Application Thread. The sockservers are threads for each client, performing tasks
  * and communicating back with the JFXAT to update the server GUI
  */
@@ -141,27 +140,6 @@ public class ServerController {
 
         executor.execute(serverTask);
     }
-
-//    /**
-//     * Starts a new round of the game.
-//     */
-//    private void startNewRound() {
-//        int drawerID = gameLogic.startNewRound();
-//        String word = gameLogic.getCurrentWord();
-//        String hint = gameLogic.getWordHint();
-//
-//        displayMessageToAll("[Server] Round starting! Client " + drawerID + " is drawing\n");
-//
-//        Message drawerMsg = Message.createRoundStartMessage(word, 60);
-//        sockServer[drawerID].sendData(drawerMsg);
-//
-//        for (int i = 1; i <= MAX_CLIENTS; i++) {
-//            if (i != drawerID && sockServer[i] != null && sockServer[i].alive) {
-//                Message guesserMsg = Message.createRoundStartMessage(hint, 60);
-//                sockServer[i].sendData(guesserMsg);
-//            }
-//        }
-//    }
 
     /**
      * Broadcasts message only to drawer and players who already guessed.

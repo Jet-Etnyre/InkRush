@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 
 /**
@@ -46,7 +45,7 @@ public class GameLogic {
     /**
      * Creates a new GameLogic instance.
      * Initializes player tracking and game state.
-     * @param wordBank the initialized WordBank instance for fetching words <-- NEW PARAMETER
+     * @param wordBank the initialized WordBank instance for fetching words
      */
     public GameLogic(WordBank wordBank) {
         this.wordBank = wordBank;
