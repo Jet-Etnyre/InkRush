@@ -276,6 +276,7 @@ public class CanvasController {
             // Draw locally
             gc.setLineWidth(currentBrushSize);
             gc.setStroke(currentColor);
+            gc.strokeLine(lastX, lastY, lastX, lastY);
         });
 
         drawingCanvas.setOnMouseDragged(event -> {
