@@ -236,6 +236,8 @@ public class ServerController {
 
         currentDrawerID = Integer.parseInt(roundInfo[0]); // Get the assigned drawer ID
 
+        String drawerName = gameLogic.getPlayerUsername(currentDrawerID);
+
         // Get the word options array: {W1, W2, W3}
         String[] options = new String[3];
         System.arraycopy(roundInfo, 1, options, 0, 3);
@@ -250,7 +252,7 @@ public class ServerController {
         }
 
         // notify everyone else to wait
-        broadcastExcept(Message.createChatMessage("SERVER", "Waiting for drawer to choose a word..."), currentDrawerID);
+        broadcastExcept(Message.createChatMessage("SERVER", "Waiting for " + drawerName + " to choose a word..."), currentDrawerID);
         displayMessageToAll("[Phase 2] Waiting for Client " + currentDrawerID + " to choose a word.\n");
     }
 
@@ -646,11 +648,11 @@ public class ServerController {
                         sockServer[drawerID].sendData(Message.createScoreMessage(drawerTotal));
                     }
 
-                    Message toGuesser = Message.createChatMessage("SYSTEM",
+                    Message toGuesser = Message.createChatMessage("SERVER",
                             "You guessed the word! +" + points + " points");
                     sockServer[myConID].sendData(toGuesser);
 
-                    Message toOthers = Message.createChatMessage("SYSTEM",
+                    Message toOthers = Message.createChatMessage("SERVER",
                             username + " guessed the word!");
                     broadcastExcept(toOthers, myConID);
 
