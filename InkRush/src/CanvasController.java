@@ -430,13 +430,20 @@ public class CanvasController {
         // 1. Switch color to White (Background color)
         currentColor = Color.WHITE;
 
-        // 2. Set Slider to Maximum (20) for big eraser
+        // Locks the Color Picker so they can't change it while erasing
+        if (colorPicker != null) {
+            colorPicker.setValue(Color.WHITE);
+            // Grey out the picker
+            colorPicker.setDisable(true);
+        }
+
+        // Set Slider to Maximum (20) for big eraser
         if (sizeSlider != null) {
             sizeSlider.setValue(sizeSlider.getMax());
             currentBrushSize = sizeSlider.getMax();
         }
 
-        // Optional: Update the label manually since the slider listener might lag slightly
+        // Update the label manually since the slider listener might lag slightly
         if (sizeValueLabel != null) {
             sizeValueLabel.setText("Brush: " + (int)currentBrushSize + "px");
         }
@@ -444,20 +451,22 @@ public class CanvasController {
 
     @FXML
     private void onDrawClicked() {
-        // Switch back to Black (or whatever is in the ColorPicker)
+        // Unlock the Color Picker
         if (colorPicker != null) {
-            currentColor = colorPicker.getValue(); // Use selected color
-            // Or force black: currentColor = Color.BLACK;
-        } else {
-            currentColor = Color.BLACK;
+            // Enable it again
+            colorPicker.setDisable(false);
+            // Reset visual to Black
+            colorPicker.setValue(Color.BLACK);
         }
 
-        // Reset Slider to a normal drawing size (e.g., 4)
+        // Reset logic color to Black
+        currentColor = Color.BLACK;
+
+        // Reset Slider to normal size (4)
         if (sizeSlider != null) {
             sizeSlider.setValue(4);
             currentBrushSize = 4;
         }
-
         if (sizeValueLabel != null) {
             sizeValueLabel.setText("Brush: 4px");
         }
