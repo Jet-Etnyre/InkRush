@@ -78,6 +78,10 @@ public class GameLogic {
     public void removePlayer(int clientID) {
         players.remove(clientID);
         playerOrder.remove(Integer.valueOf(clientID));
+
+        if (!playerOrder.isEmpty() && currentDrawerIndex >= playerOrder.size()) {
+            currentDrawerIndex = 0;
+        }
     }
 
     /**
@@ -88,6 +92,10 @@ public class GameLogic {
     public String[] startNewRound() {
         if (playerOrder.isEmpty()) {
             return null;
+        }
+
+        if (currentDrawerIndex >= playerOrder.size()) {
+            currentDrawerIndex = 0;
         }
 
         // select next drawer (rotates through all players)
