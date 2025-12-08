@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
-import javafx.application.Platform;
 
 //using Interpolation to solve the losing packet while drawing issue
 import javafx.animation.AnimationTimer;
@@ -427,7 +426,7 @@ public class CanvasController {
 
     @FXML
     private void onEraserClicked() {
-        // 1. Switch color to White (Background color)
+        // Switch color to White (Background color)
         currentColor = Color.WHITE;
 
         // Locks the Color Picker so they can't change it while erasing

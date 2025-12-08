@@ -318,7 +318,7 @@ public class Message implements Serializable {
 
     /**
      * Creates a LEADERBOARD message
-     * @param leaderboardString stirng of leaderboard info
+     * @param leaderboardString string of leaderboard info
      * @return Message object
      */
     public static Message createLeaderboardMessage(String leaderboardString) {
