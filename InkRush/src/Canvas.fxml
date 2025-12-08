@@ -15,6 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.geometry.Insets?>
 <VBox prefHeight="677.0" prefWidth="720.0" spacing="10" style="-fx-background-color: #FFD61E;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CanvasController">
 
     <GridPane prefHeight="81.0" prefWidth="720.0">
@@ -58,9 +59,9 @@
                         </font>
                     </Label>
                     <Label fx:id="scoreLabel" alignment="CENTER" prefHeight="17.0" prefWidth="127.0" text="0">
-                  <font>
-                     <Font name="Goudy Stout" size="16.0" />
-                  </font></Label>
+                        <font>
+                            <Font name="Goudy Stout" size="16.0" />
+                        </font></Label>
                 </children>
             </HBox>
         </children>
@@ -70,7 +71,7 @@
         <columnConstraints>
             <ColumnConstraints hgrow="SOMETIMES" maxWidth="515.8000244140625" minWidth="362.3999755859375" prefWidth="392.00001220703126" />
             <ColumnConstraints hgrow="SOMETIMES" maxWidth="358.40002441406244" minWidth="121.59998779296876" prefWidth="125.59998779296876" />
-         <ColumnConstraints hgrow="SOMETIMES" maxWidth="358.40002441406244" minWidth="201.60001220703123" prefWidth="201.60001220703123" />
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="358.40002441406244" minWidth="201.60001220703123" prefWidth="201.60001220703123" />
         </columnConstraints>
         <rowConstraints>
             <RowConstraints />
@@ -83,16 +84,16 @@
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
                     <Label fx:id="wordToGuessLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="28.0" prefWidth="242.0">
-                  <font>
-                     <Font name="System Bold Italic" size="18.0" />
-                  </font></Label>
+                        <font>
+                            <Font name="System Bold Italic" size="18.0" />
+                        </font></Label>
                 </children>
             </HBox>
-         <Label fx:id="roundLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="118.0" text="Round: /5" textFill="#662dcc" GridPane.columnIndex="1">
-            <font>
-               <Font name="System Bold" size="18.0" />
-            </font>
-         </Label>
+            <Label fx:id="roundLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="118.0" text="Round: /5" textFill="#662dcc" GridPane.columnIndex="1">
+                <font>
+                    <Font name="System Bold" size="18.0" />
+                </font>
+            </Label>
         </children>
     </GridPane>
 
@@ -102,7 +103,10 @@
                 <Canvas fx:id="drawingCanvas" height="300" width="500" />
             </StackPane>
 
-            <VBox alignment="CENTER" spacing="10">
+            <VBox alignment="TOP_CENTER" spacing="10">
+                <padding>
+                    <Insets top="15.0" />
+                </padding>
 
                 <Label text="Your Avatar" textFill="#662dcc">
                     <font>
@@ -114,23 +118,44 @@
                     <Canvas fx:id="avatarCanvas" height="80.0" width="80.0" />
                 </StackPane>
 
-                <Button fx:id="clearButton" onAction="#clearCanvas" prefHeight="35.0" prefWidth="121.0" style="-fx-background-color: #FFFFFF;" text="Clear">
-                    <font><Font name="Goudy Stout" size="16.0" /></font>
-                </Button>
+                <VBox spacing="8" alignment="CENTER">
+                    <VBox.margin>
+                        <Insets top="5.0" bottom="5.0"/>
+                    </VBox.margin>
 
+                    <Button fx:id="drawButton" onAction="#onDrawClicked" prefHeight="35.0" prefWidth="180.0" style="-fx-background-color: #FFFFFF;" text="Draw">
+                        <font>
+                            <Font name="Goudy Stout" size="10.0" />
+                        </font>
+                    </Button>
+
+                    <Button fx:id="eraserButton" onAction="#onEraserClicked" prefHeight="35.0" prefWidth="180.0" style="-fx-background-color: #FFFFFF;" text="Eraser">
+                        <font>
+                            <Font name="Goudy Stout" size="10.0" />
+                        </font>
+                    </Button>
+
+                    <Button fx:id="clearButton" onAction="#clearCanvas" prefHeight="35.0" prefWidth="180.0" style="-fx-background-color: #FFFFFF;" text="Clear">
+                        <font>
+                            <Font name="Goudy Stout" size="10.0" />
+                        </font>
+                    </Button>
+                </VBox>
                 <HBox alignment="CENTER" spacing="10">
                     <Label text="Color:">
-                  <font>
-                     <Font name="System Bold Italic" size="16.0" />
-                  </font></Label>
+                        <font>
+                            <Font name="System Bold Italic" size="16.0" />
+                        </font>
+                    </Label>
                     <ColorPicker fx:id="colorPicker" />
                 </HBox>
 
                 <HBox alignment="CENTER" spacing="10">
                     <Label text="Size:">
-                  <font>
-                     <Font name="System Bold Italic" size="16.0" />
-                  </font></Label>
+                        <font>
+                            <Font name="System Bold Italic" size="16.0" />
+                        </font>
+                    </Label>
                     <Slider fx:id="sizeSlider" max="20" min="1" prefWidth="120" value="4" />
                 </HBox>
 
