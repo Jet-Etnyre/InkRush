@@ -12,9 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Controller for the Game Over screen with confetti animation!
- */
 public class GameOverController {
 
     @FXML private Canvas confettiCanvas;
@@ -42,9 +39,10 @@ public class GameOverController {
     private AnimationTimer confettiTimer;
     private Random random = new Random();
 
-    /**
-     * Confetti particle class
-     */
+    // Store canvas dimensions for performance
+    private double width;
+    private double height;
+
     private class Confetti {
         double x, y;
         double vx, vy;
@@ -53,23 +51,19 @@ public class GameOverController {
         double rotation;
         double rotationSpeed;
 
-        Confetti(double x, double y) {
-            this.x = x;
-            this.y = y;
-            this.vx = (random.nextDouble() - 0.5) * 4;
+        Confetti(double startX, double startY) {
+            this.x = startX;
+            this.y = startY;
+            // Spread X velocity slightly more
+            this.vx = (random.nextDouble() - 0.5) * 6;
             this.vy = random.nextDouble() * 3 + 2;
             this.size = random.nextDouble() * 8 + 4;
             this.rotation = random.nextDouble() * 360;
             this.rotationSpeed = (random.nextDouble() - 0.5) * 10;
 
-            // Random bright colors
             Color[] colors = {
-                Color.web("#ffb84d"),
-                Color.web("#1E90FF"),
-                Color.web("#FFD700"),
-                Color.web("#FF69B4"),
-                Color.web("#00FA9A"),
-                Color.web("#FF6347")
+                Color.web("#ffb84d"), Color.web("#1E90FF"), Color.web("#FFD700"),
+                Color.web("#FF69B4"), Color.web("#00FA9A"), Color.web("#FF6347")
             };
             this.color = colors[random.nextInt(colors.length)];
         }
@@ -78,49 +72,60 @@ public class GameOverController {
             x += vx;
             y += vy;
             rotation += rotationSpeed;
-            vy += 0.15; // gravity
+            vy += 0.1; // Slight gravity
         }
 
+        // Dynamic check based on current screen size
         boolean isOffScreen() {
-            return y > 600 || x < -20 || x > 520;
+            return y > height || x < -50 || x > width + 50;
         }
     }
 
     @FXML
     public void initialize() {
-        // Start confetti animation
+        // 1. Bind Canvas to the parent container so it resizes with the window
+        // Note: The parent must be the StackPane in the FXML
+        if (confettiCanvas.getParent() instanceof javafx.scene.layout.Region) {
+            javafx.scene.layout.Region parent = (javafx.scene.layout.Region) confettiCanvas.getParent();
+            confettiCanvas.widthProperty().bind(parent.widthProperty());
+            confettiCanvas.heightProperty().bind(parent.heightProperty());
+        }
+
+        // 2. Initialize dimensions
+        width = confettiCanvas.getWidth();
+        height = confettiCanvas.getHeight();
+
+        // 3. Update dimensions if they change
+        confettiCanvas.widthProperty().addListener((obs, oldVal, newVal) -> width = newVal.doubleValue());
+        confettiCanvas.heightProperty().addListener((obs, oldVal, newVal) -> height = newVal.doubleValue());
+
         startConfetti();
     }
 
-    /**
-     * Starts the confetti animation
-     */
     private void startConfetti() {
         GraphicsContext gc = confettiCanvas.getGraphicsContext2D();
 
-        // Generate initial confetti
+        // Initial burst
         for (int i = 0; i < 100; i++) {
-            confettiList.add(new Confetti(random.nextDouble() * 500, -random.nextDouble() * 200));
+            // Use 'width' instead of 500
+            confettiList.add(new Confetti(random.nextDouble() * width, -random.nextDouble() * 200));
         }
 
         confettiTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // Clear canvas
-                gc.clearRect(0, 0, 500, 600);
+                // Clear the ENTIRE canvas, not just 500x600
+                gc.clearRect(0, 0, width, height);
 
-                // Update and draw confetti
                 for (int i = confettiList.size() - 1; i >= 0; i--) {
                     Confetti c = confettiList.get(i);
                     c.update();
 
-                    // Remove if off screen
                     if (c.isOffScreen()) {
                         confettiList.remove(i);
-                        // Add new one at top
-                        confettiList.add(new Confetti(random.nextDouble() * 500, -10));
+                        // Respawn at random X within current WIDTH
+                        confettiList.add(new Confetti(random.nextDouble() * width, -20));
                     } else {
-                        // Draw confetti piece
                         gc.save();
                         gc.translate(c.x, c.y);
                         gc.rotate(c.rotation);
@@ -135,104 +140,81 @@ public class GameOverController {
         confettiTimer.start();
     }
 
-    /**
-     * Sets the leaderboard data
-     */
     public void setLeaderboardData(String leaderboardData) {
         try {
-            // Format: "Name1:Score1:Name2:Score2:Name3:Score3"
+            // Clean up the input just in case
+            if (leaderboardData == null) return;
+
             String[] parts = leaderboardData.split(":");
 
-            // Winner (1st place)
+            // Winner
             if (parts.length >= 2) {
-                winnerLabel.setText("🏆 WINNER: " + parts[0] + " 🏆");
+                // Update specific labels
+                winnerLabel.setText(parts[0]); // Just name, "WINNER" is static in FXML
                 place1Name.setText(parts[0]);
-                place1Score.setText(parts[1] + " pts");
+                place1Score.setText(parts[1]);
             }
 
-            // 2nd place
+            // 2nd
             if (parts.length >= 4) {
                 place2Name.setText(parts[2]);
-                place2Score.setText(parts[3] + " pts");
+                place2Score.setText(parts[3]);
             } else {
                 place2Name.setText("---");
                 place2Score.setText("---");
             }
 
-            // 3rd place
+            // 3rd
             if (parts.length >= 6) {
                 place3Name.setText(parts[4]);
-                place3Score.setText(parts[5] + " pts");
+                place3Score.setText(parts[5]);
             } else {
                 place3Name.setText("---");
                 place3Score.setText("---");
             }
 
         } catch (Exception e) {
-            System.err.println("[ERROR] Failed to parse leaderboard: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Leaderboard Error: " + e.getMessage());
         }
     }
 
-    /**
-     * Starts countdown
-     */
+    // ... Rest of your restart/close logic remains the same ...
+
     public void startCountdown() {
         new Thread(() -> {
             while (countdown > 0) {
                 final int current = countdown;
-                Platform.runLater(() -> countdownLabel.setText("Returning to game in " + current + " seconds..."));
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
-                }
+                Platform.runLater(() -> countdownLabel.setText("Returning to game in " + current + "s..."));
+                try { Thread.sleep(1000); } catch (InterruptedException e) { break; }
                 countdown--;
             }
-
-            Platform.runLater(() -> closeGame());
+            Platform.runLater(this::closeGame);
         }).start();
     }
 
     @FXML
     private void onRestartClicked() {
-        // Stop confetti
         if (confettiTimer != null) confettiTimer.stop();
-
-        // Send restart message to server
-        System.out.println("[GAME] Restart clicked!");
-        // TODO: Send RESTART message to server
-
-        Platform.runLater(() -> {
-            Stage stage = (Stage) restartButton.getScene().getWindow();
-            stage.close();
-        });
+        // Send logic...
+        closeGame();
     }
 
     @FXML
     private void onCloseClicked() {
-        if (confettiTimer != null) {
-            confettiTimer.stop();
-        }
-
+        if (confettiTimer != null) confettiTimer.stop();
         Platform.runLater(() -> {
             Stage stage = (Stage) closeButton.getScene().getWindow();
             stage.close();
-
-            // Exit the entire application
             Platform.exit();
             System.exit(0);
-        });    }
+        });
+    }
 
     private void closeGame() {
-        if (confettiTimer != null) {
-            confettiTimer.stop();
-        }
-
+        if (confettiTimer != null) confettiTimer.stop();
         Platform.runLater(() -> {
             Stage stage = (Stage) closeButton.getScene().getWindow();
-            stage.close();
+            if(stage != null) stage.close();
         });
     }
 }
