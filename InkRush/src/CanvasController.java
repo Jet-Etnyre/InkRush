@@ -37,6 +37,11 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javafx.scene.image.Image;
 
+import javafx.scene.media.AudioClip; // For short sound effects (wav)
+import javafx.scene.media.Media;     // For music media
+import javafx.scene.media.MediaPlayer; // For music player controls
+import java.net.URL;
+
 
 
 /**
@@ -122,6 +127,10 @@ public class CanvasController {
     private AnimationTimer roundTimer;
     private long timerEndTime;
 
+    // Audio fields
+    private MediaPlayer gameMusicPlayer;
+    private AudioClip correctSound;
+
     // Animation Queue: Stores points to be drawn smoothly
     // Wrapper class to track if a point is the start of a new stroke
     private static class PointRequest {
@@ -180,6 +189,35 @@ public class CanvasController {
     }
 
     /**
+     * This class sets up the audio
+     */
+    private void setupAudio() {
+        try {
+            // 1. Load Background Music (MP3)
+            URL musicUrl = getClass().getResource("game_background.mp3");
+            if (musicUrl != null) {
+                Media media = new Media(musicUrl.toExternalForm());
+                gameMusicPlayer = new MediaPlayer(media);
+                gameMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE); // Loop forever
+                gameMusicPlayer.setVolume(0.3); // Set volume to 30%
+                gameMusicPlayer.play(); // Start immediately
+            } else {
+                System.out.println("Warning: game_background.mp3 not found");
+            }
+
+            // 2. Load "Correct Guess" Sound Effect (WAV)
+            URL soundUrl = getClass().getResource("your_correct.wav");
+            if (soundUrl != null) {
+                correctSound = new AudioClip(soundUrl.toExternalForm());
+            } else {
+                System.out.println("Warning: your_correct.wav not found");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error loading audio: " + e.getMessage());
+        }
+    }
+    /**
      * Initializes the controller after FXML is loaded.
      * Sets up event handlers for drawing and UI controls.
      */
@@ -219,6 +257,9 @@ public class CanvasController {
 
         //start the animation loop
         startSmoothDrawingLoop();
+
+        //set up audio
+        setupAudio();
     }
 
     private void onStartGameClicked() {
@@ -657,6 +698,14 @@ public class CanvasController {
             Message.ChatData chatData = message.parseChatMessage();
             String user = chatData.getUsername();
             String chatMessage = chatData.getMessage();
+
+            // If the message contains "guessed correctly", play the sound!
+            // (Adjust the string match if your server sends a different specific message)
+            if (chatMessage.toLowerCase().contains("guessed correctly")) {
+                if (correctSound != null) {
+                    correctSound.play();
+                }
+            }
             displayMessage(user + ": " + chatMessage + "\n");
 
         } else if (messageType.equals(Message.DRAW)) {
@@ -786,6 +835,12 @@ public class CanvasController {
             String leaderboardData = message.getMessageContents();
 
             Platform.runLater(() -> {
+
+                // stop the music
+                if (gameMusicPlayer != null) {
+                    gameMusicPlayer.stop();
+                }
+                //stop the game
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("GameOver.fxml"));
 
@@ -951,6 +1006,10 @@ public class CanvasController {
      */
     public void disconnect() {
         connected = false;
+
+        if (gameMusicPlayer != null) {
+            gameMusicPlayer.stop();
+        }
 
         try {
             if (output != null) {
