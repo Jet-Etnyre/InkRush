@@ -84,7 +84,6 @@ public class GameOverController {
     @FXML
     public void initialize() {
         // 1. Bind Canvas to the parent container so it resizes with the window
-        // Note: The parent must be the StackPane in the FXML
         if (confettiCanvas.getParent() instanceof javafx.scene.layout.Region) {
             javafx.scene.layout.Region parent = (javafx.scene.layout.Region) confettiCanvas.getParent();
             confettiCanvas.widthProperty().bind(parent.widthProperty());
@@ -107,14 +106,12 @@ public class GameOverController {
 
         // Initial burst
         for (int i = 0; i < 100; i++) {
-            // Use 'width' instead of 500
             confettiList.add(new Confetti(random.nextDouble() * width, -random.nextDouble() * 200));
         }
 
         confettiTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // Clear the ENTIRE canvas, not just 500x600
                 gc.clearRect(0, 0, width, height);
 
                 for (int i = confettiList.size() - 1; i >= 0; i--) {
@@ -123,7 +120,6 @@ public class GameOverController {
 
                     if (c.isOffScreen()) {
                         confettiList.remove(i);
-                        // Respawn at random X within current WIDTH
                         confettiList.add(new Confetti(random.nextDouble() * width, -20));
                     } else {
                         gc.save();
@@ -142,33 +138,42 @@ public class GameOverController {
 
     public void setLeaderboardData(String leaderboardData) {
         try {
-            // Clean up the input just in case
             if (leaderboardData == null) return;
 
             String[] parts = leaderboardData.split(":");
 
-            // Winner
+            // Winner (1st place) - FIXED: Now properly shows their medal
             if (parts.length >= 2) {
-                // Update specific labels
-                winnerLabel.setText(parts[0]); // Just name, "WINNER" is static in FXML
-                place1Name.setText(parts[0]);
-                place1Score.setText(parts[1]);
+                String winnerName = parts[0];
+                String winnerScore = parts[1];
+
+                // Update winner display at the top
+                winnerLabel.setText(winnerName);
+
+                // Update first place in leaderboard WITH the gold medal icon
+                place1Icon.setText("🥇");
+                place1Name.setText(winnerName);
+                place1Score.setText(winnerScore);
             }
 
-            // 2nd
+            // 2nd place
             if (parts.length >= 4) {
+                place2Icon.setText("🥈");
                 place2Name.setText(parts[2]);
                 place2Score.setText(parts[3]);
             } else {
+                place2Icon.setText("");
                 place2Name.setText("---");
                 place2Score.setText("---");
             }
 
-            // 3rd
+            // 3rd place
             if (parts.length >= 6) {
+                place3Icon.setText("🥉");
                 place3Name.setText(parts[4]);
                 place3Score.setText(parts[5]);
             } else {
+                place3Icon.setText("");
                 place3Name.setText("---");
                 place3Score.setText("---");
             }
@@ -177,8 +182,6 @@ public class GameOverController {
             System.err.println("Leaderboard Error: " + e.getMessage());
         }
     }
-
-    // ... Rest of your restart/close logic remains the same ...
 
     public void startCountdown() {
         new Thread(() -> {
@@ -195,7 +198,6 @@ public class GameOverController {
     @FXML
     private void onRestartClicked() {
         if (confettiTimer != null) confettiTimer.stop();
-        // Send logic...
         closeGame();
     }
 
