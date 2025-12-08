@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
+
+<StackPane prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GameOverController">
+
+    <!-- Confetti Canvas (behind everything) -->
+    <javafx.scene.canvas.Canvas fx:id="confettiCanvas" height="600.0" width="500.0" />
+
+    <!-- Main Content -->
+    <VBox alignment="CENTER" spacing="20" style="-fx-background-color: #FFD61E; -fx-border-color: #722b2b; -fx-border-width: 8; -fx-border-radius: 10; -fx-background-radius: 10;">
+        <padding>
+            <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+        </padding>
+
+        <!-- Title -->
+        <Label text="GAME OVER!" textFill="#722b2b">
+            <font>
+                <Font name="Goudy Stout" size="36.0" />
+            </font>
+        </Label>
+
+        <!-- Winner Announcement -->
+        <Label fx:id="winnerLabel" text="🏆 WINNER: PlayerName 🏆" textFill="#ffb84d">
+            <font>
+                <Font name="System Bold" size="24.0" />
+            </font>
+        </Label>
+
+        <!-- Separator -->
+        <Label text="═══════════════════════" textFill="#722b2b">
+            <font>
+                <Font size="20.0" />
+            </font>
+        </Label>
+
+        <!-- 1st Place -->
+        <HBox alignment="CENTER" spacing="15" style="-fx-background-color: #FFEBCD; -fx-background-radius: 10; -fx-padding: 15;">
+            <children>
+                <Label fx:id="place1Icon" text="🥇" textFill="#FFD700">
+                    <font>
+                        <Font size="48.0" />
+                    </font>
+                </Label>
+
+                <VBox alignment="CENTER_LEFT" spacing="5" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label text="1st Place" textFill="#722b2b">
+                            <font>
+                                <Font name="Goudy Stout" size="14.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="place1Name" text="PlayerName" textFill="#ffb84d">
+                            <font>
+                                <Font name="System Bold" size="20.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+
+                <Label fx:id="place1Score" text="1000 pts" textFill="#722b2b">
+                    <font>
+                        <Font name="Goudy Stout" size="18.0" />
+                    </font>
+                </Label>
+            </children>
+        </HBox>
+
+        <!-- 2nd Place -->
+        <HBox alignment="CENTER" spacing="15" style="-fx-background-color: #F5F5DC; -fx-background-radius: 10; -fx-padding: 12;">
+            <children>
+                <Label fx:id="place2Icon" text="🥈" textFill="#C0C0C0">
+                    <font>
+                        <Font size="40.0" />
+                    </font>
+                </Label>
+
+                <VBox alignment="CENTER_LEFT" spacing="5" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label text="2nd Place" textFill="#722b2b">
+                            <font>
+                                <Font name="Goudy Stout" size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="place2Name" text="PlayerName" textFill="#ffb84d">
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+
+                <Label fx:id="place2Score" text="800 pts" textFill="#722b2b">
+                    <font>
+                        <Font name="Goudy Stout" size="16.0" />
+                    </font>
+                </Label>
+            </children>
+        </HBox>
+
+        <!-- 3rd Place -->
+        <HBox alignment="CENTER" spacing="15" style="-fx-background-color: #F5F5DC; -fx-background-radius: 10; -fx-padding: 12;">
+            <children>
+                <Label fx:id="place3Icon" text="🥉" textFill="#CD7F32">
+                    <font>
+                        <Font size="40.0" />
+                    </font>
+                </Label>
+
+                <VBox alignment="CENTER_LEFT" spacing="5" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label text="3rd Place" textFill="#722b2b">
+                            <font>
+                                <Font name="Goudy Stout" size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="place3Name" text="PlayerName" textFill="#ffb84d">
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </VBox>
+
+                <Label fx:id="place3Score" text="600 pts" textFill="#722b2b">
+                    <font>
+                        <Font name="Goudy Stout" size="16.0" />
+                    </font>
+                </Label>
+            </children>
+        </HBox>
+
+        <!-- Countdown Label -->
+        <Label fx:id="countdownLabel" text="Closing in 10 seconds..." textFill="#722b2b">
+            <font>
+                <Font name="System Bold Italic" size="14.0" />
+            </font>
+        </Label>
+
+        <!-- Buttons -->
+        <HBox alignment="CENTER" spacing="20">
+            <children>
+                <!-- Restart Button (Orange) -->
+                <Button fx:id="restartButton" onAction="#onRestartClicked" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: #ffb84d; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-color: #722b2b; -fx-border-width: 3; -fx-border-radius: 10;" text="Restart">
+                    <font>
+                        <Font name="Goudy Stout" size="14.0" />
+                    </font>
+                </Button>
+
+                <!-- Close Button (Blue) -->
+                <Button fx:id="closeButton" onAction="#onCloseClicked" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: #1E90FF; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-color: #722b2b; -fx-border-width: 3; -fx-border-radius: 10;" text="Close Game">
+                    <font>
+                        <Font name="Goudy Stout" size="14.0" />
+                    </font>
+                </Button>
+            </children>
+        </HBox>
+
+    </VBox>
+</StackPane>
