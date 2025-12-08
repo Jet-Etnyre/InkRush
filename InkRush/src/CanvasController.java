@@ -11,9 +11,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane; // Or whatever root your FXML uses
+import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
-import javafx.scene.paint.Color; // If needed for transparent style
+import javafx.scene.paint.Color;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
@@ -72,7 +72,7 @@ public class CanvasController {
     @FXML
     private Label roundLabel;
 
-    // NEW FXML controls
+    // FXML controls
     @FXML private ColorPicker colorPicker;
     @FXML private Slider sizeSlider;
     @FXML private Label sizeValueLabel;

@@ -77,6 +77,10 @@ public class GameLogic {
     public void removePlayer(int clientID) {
         players.remove(clientID);
         playerOrder.remove(Integer.valueOf(clientID));
+
+        if (!playerOrder.isEmpty() && currentDrawerIndex >= playerOrder.size()) {
+            currentDrawerIndex = 0;
+        }
     }
 
     /**
@@ -89,12 +93,16 @@ public class GameLogic {
             return null;
         }
 
+        if (currentDrawerIndex >= playerOrder.size()) {
+            currentDrawerIndex = 0;
+        }
+
         // select next drawer (rotates through all players)
         currentDrawerID = playerOrder.get(currentDrawerIndex);
 
         // Create a list of words that have reached the usage limit
         List<String> wordsToExclude = new ArrayList<>();
-        int USAGE_LIMIT = 3;
+        int USAGE_LIMIT = 1;
 
         for (Map.Entry<String, Integer> entry : wordUsageCount.entrySet()) {
             if (entry.getValue() >= USAGE_LIMIT) {
@@ -104,6 +112,20 @@ public class GameLogic {
 
         // Get the three word choices from the database
         List<String> chosenList = wordBank.getThreeWords(wordsToExclude);
+
+        if (chosenList.size() < 3) {
+            System.out.println("[GameLogic] Word pool exhausted. Resetting usage history.");
+
+            // Clear the history map
+            wordUsageCount.clear();
+
+            // Clear the local exclusion list we just built
+            wordsToExclude.clear();
+
+            // Fetch again with a fresh slate
+            chosenList = wordBank.getThreeWords(wordsToExclude);
+        }
+
         currentWordOptions = chosenList.toArray(new String[0]);
 
         // NOTE: The currentWord is NOT set here. It is set by the drawer's choice.
